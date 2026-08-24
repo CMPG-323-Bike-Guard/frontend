@@ -1,6 +1,6 @@
-# CampusGuard — Frontend
+# BikeGuard — Frontend
 
-The web client for **CampusGuard**, NWU's RFID-based bike access control system. This repo covers the two user-facing surfaces of the project: the **Guard Dashboard** (live gate status and mismatch alarms) and the **Student/Admin Portal** (bike registration and tag management).
+The web client for **BikeGuard**, NWU's RFID-based bike access control system. This repo covers the two user-facing surfaces of the project: the **Guard Dashboard** (live gate status and mismatch alarms) and the **Student/Admin Portal** (bike registration and tag management).
 
 > Backend / API lives in a separate repo: [`backend`](../backend)
 
