@@ -1,0 +1,63 @@
+.gate-grid {
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0, 1fr));
+  gap:16px;
+  margin-top:6px;
+}
+
+.gate-card {
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:16px;
+  box-shadow:var(--shadow);
+}
+
+.gate-head {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:10px;
+}
+
+.gate-name {
+  font-weight:700;
+}
+
+.gate-status {
+  font-size:11px;
+  padding:5px 8px;
+  border-radius:999px;
+}
+
+.gate-status.auto {
+  background:var(--success-bg);
+  color:var(--success);
+}
+
+.gate-status.manual {
+  background:var(--warning-bg);
+  color:var(--warning);
+}
+
+.gate-body {
+  display:flex;
+  justify-content:space-between;
+  align-items:end;
+  gap:10px;
+  margin-top:8px;
+}
+
+.gate-time {
+  color:var(--muted);
+  font-size:11px;
+}
+
+.gate-cta {
+  margin-top:14px;
+}
+
+.gate-cta button {
+  width:100%;
+  border-radius:8px;
+}

@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>BikeGuard - Reports</title>
+  <link rel="stylesheet" href="../css/global.css">
+  <link rel="stylesheet" href="reports.css">
+</head>
+<body>
+  <div class="app page">
+    <nav class="sidebar-nav">
+      <div>
+        <div class="brand" style="padding:16px 18px 10px; color:white;">
+          <div class="logo"><img src="../images/logo.svg" alt="BikeGuard" /></div>
+          <div style="margin-left:10px;"><h1 style="font-size:16px; margin:0;">BikeGuard</h1></div>
+        </div>
+        <div class="menu">
+          <a href="registrations.html">Registrations</a>
+          <a href="tags.html">Tags</a>
+          <a href="users.html">Users</a>
+          <a href="reports.html" class="active">Reports</a>
+        </div>
+      </div>
+      <div>
+        <div class="user-details">
+          <div class="user-icon">👤</div>
+          <div>
+            <div id="sidebar-user-name" class="user-name">Admin User</div>
+            <div id="sidebar-user-id" class="user-id">ADMIN001</div>
+          </div>
+        </div>
+        <button id="signout-button" class="signout-link" type="button">Sign out</button>
+      </div>
+    </nav>
+
+    <main class="main">
+      <div class="container">
+        <h2>Pilot Reports</h2>
+        <p class="subheading">System performance and usage insights.</p>
+
+        <div class="grid-3" style="margin-bottom:20px;">
+          <div class="card summary-tile"><div class="summary-label">Crossings today</div><div id="rep-crossings" class="summary-value small">0</div></div>
+          <div class="card summary-tile"><div class="summary-label">Gates on manual</div><div id="rep-gates" class="summary-value small">0</div></div>
+          <div class="card summary-tile"><div class="summary-label">Read success</div><div id="rep-success" class="summary-value small">0</div></div>
+        </div>
+
+        <div class="chart-wrap" style="margin-bottom:18px;">
+          <div class="chart-header"><h3>Today's bike crossings by gate</h3></div>
+          <canvas id="today-crossings-chart" class="chart-box"></canvas>
+        </div>
+
+        <div class="chart-wrap" style="margin-bottom:18px;">
+          <div class="chart-header"><h3>Crossing history</h3></div>
+          <div style="margin-bottom:8px;"><button class="btn range-btn active" data-days="7">Last 7 Days</button> <button class="btn range-btn" data-days="14">Last 14 Days</button> <button class="btn range-btn" data-days="30">Last 30 Days</button></div>
+          <canvas id="history-crossings-chart" class="chart-box"></canvas>
+        </div>
+
+        <div class="card report-date-card" style="padding:16px;">
+          <div class="chart-header"><h3>Selected date gate activity</h3></div>
+          <input id="date-specific-picker" type="hidden" />
+          <div id="date-calendar" class="date-calendar"></div>
+          <div id="date-specific-panel" class="hidden" style="margin-top:16px;">
+            <canvas id="date-gate-chart" class="chart-box"></canvas>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="../js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,98 @@
+.grid-3 {
+  display:grid;
+  grid-template-columns:repeat(3, minmax(0, 1fr));
+  gap:16px;
+  margin-bottom:20px;
+}
+
+.chart-wrap {
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:20px;
+  box-shadow:var(--shadow);
+  margin-bottom:18px;
+}
+
+.chart-box {
+  height:220px;
+  width:100%;
+  display:block;
+}
+
+.chart-header {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:16px;
+}
+
+.chart-header h3 {
+  margin:0;
+}
+
+.date-calendar {
+  display:grid;
+  grid-template-columns:repeat(7, minmax(0,1fr));
+  gap:8px;
+  margin-top:12px;
+}
+
+.calendar-day-label,
+.calendar-day {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:38px;
+  border-radius:8px;
+  border:1px solid var(--border);
+  background:var(--surface);
+  font-size:12px;
+  font-weight:600;
+}
+
+.calendar-day-label {
+  background:var(--panel);
+  color:var(--muted);
+  min-height:28px;
+  border:none;
+}
+
+.calendar-day {
+  cursor:pointer;
+  color:var(--text);
+}
+
+.calendar-day:hover:not(.is-disabled) {
+  border-color:var(--primary);
+  color:var(--primary);
+}
+
+.calendar-day.is-today {
+  background:rgba(59,32,178,0.08);
+  border-color:var(--primary);
+  color:var(--primary);
+}
+
+.calendar-day.is-selected {
+  background:var(--primary);
+  border-color:var(--primary);
+  color:#fff;
+}
+
+.calendar-day.is-outside {
+  background:transparent;
+  border-color:transparent;
+  color:var(--muted);
+  cursor:default;
+}
+
+.calendar-day.is-disabled {
+  opacity:0.45;
+  cursor:not-allowed;
+  background:var(--panel);
+}
+
+.report-date-card {
+  padding:16px;
+}
