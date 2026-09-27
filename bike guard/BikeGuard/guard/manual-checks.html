@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>BikeGuard - Manual Checks</title>
+  <link rel="stylesheet" href="../css/global.css">
+  <link rel="stylesheet" href="manual-checks.css">
+</head>
+<body>
+  <div class="app page">
+    <nav class="sidebar-nav">
+      <div>
+        <div class="brand" style="padding:16px 18px 10px; color:white;">
+          <div class="logo"><img src="../images/logo.svg" alt="BikeGuard" /></div>
+          <div style="margin-left:10px;"><h1 style="font-size:16px; margin:0;">BikeGuard</h1></div>
+        </div>
+        <div class="menu">
+          <a href="gate-board.html">Gate Board</a>
+          <a href="manual-checks.html" class="active">Manual Checks</a>
+          <a href="crossing-log.html">Crossing Log</a>
+        </div>
+      </div>
+      <div>
+        <div class="user-details">
+          <div class="user-icon">👤</div>
+          <div>
+            <div id="sidebar-user-name" class="user-name">Guard User</div>
+            <div id="sidebar-user-id" class="user-id">GUARD001</div>
+          </div>
+        </div>
+        <button id="signout-button" class="signout-link" type="button">Sign out</button>
+      </div>
+    </nav>
+
+    <main class="main">
+      <div class="container">
+        <h2>Manual Checks</h2>
+        <p class="subheading">Switch gates between automatic and manual mode when required.</p>
+
+        <div class="card form-section" style="margin-bottom:18px;">
+          <h3 style="margin:0 0 12px;">Log Crossing</h3>
+          <form id="manual-crossing-form">
+            <div class="form-row">
+              <div class="form-col">
+                <label class="form-label" for="manual-student-number">Student number</label>
+                <input id="manual-student-number" class="input" type="text" placeholder="e.g. 41768421" required />
+              </div>
+              <div class="form-col">
+                <label class="form-label" for="manual-bike">Bike</label>
+                <input id="manual-bike" class="input" type="text" placeholder="Bike name" required />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-col">
+                <label class="form-label" for="manual-tag">RFID / Tag</label>
+                <input id="manual-tag" class="input" type="text" placeholder="ABC123" required />
+              </div>
+              <div class="form-col">
+                <label class="form-label" for="manual-gate">Gate</label>
+                <select id="manual-gate" class="input" required>
+                  <option value="">Select gate</option>
+                  <option>Gate 1</option>
+                  <option>Gate 2</option>
+                  <option>Gate 3</option>
+                  <option>Gate 4</option>
+                  <option>Gate 5</option>
+                  <option>Gate 6</option>
+                  <option>Gate 7</option>
+                  <option>Gate 8</option>
+                  <option>Gate 9</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button class="btn btn-primary" type="submit">Log crossing</button>
+            </div>
+          </form>
+        </div>
+
+        <div id="manual-checks" class="gate-grid"></div>
+      </div>
+    </main>
+  </div>
+  <script src="../js/app.js"></script>
+</body>
+</html>

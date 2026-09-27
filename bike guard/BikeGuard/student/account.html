@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>BikeGuard - Account</title>
+  <link rel="stylesheet" href="../css/global.css">
+  <link rel="stylesheet" href="account.css">
+</head>
+<body>
+  <div class="app page">
+    <nav class="sidebar-nav">
+      <div>
+        <div class="brand" style="padding:16px 18px 10px; color:white;">
+          <div class="logo"><img src="../images/logo.svg" alt="BikeGuard" /></div>
+          <div style="margin-left:10px;"><h1 style="font-size:16px; margin:0;">BikeGuard</h1></div>
+        </div>
+        <div class="menu">
+          <a href="my-bikes.html">My Bikes</a>
+          <a href="register-bike.html">Register Bike</a>
+          <a href="account.html" class="active">Account</a>
+        </div>
+      </div>
+      <div>
+        <div class="user-details">
+          <div class="user-icon">👤</div>
+          <div>
+            <div id="sidebar-user-name" class="user-name">Student User</div>
+            <div id="sidebar-user-id" class="user-id">NWU12345</div>
+          </div>
+        </div>
+        <button id="signout-button" class="signout-link" type="button">Sign out</button>
+      </div>
+    </nav>
+
+    <main class="main">
+      <div class="container">
+        <h2>Account</h2>
+        <p class="subheading">Manage your account details and password.</p>
+
+        <div class="card form-section" style="margin-bottom:16px;">
+          <form id="account-form">
+            <div class="form-row">
+              <div class="form-col">
+                <label class="form-label" for="firstName">First Name</label>
+                <input id="firstName" class="input" value="Student" />
+              </div>
+              <div class="form-col">
+                <label class="form-label" for="lastName">Last Name</label>
+                <input id="lastName" class="input" value="User" />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-col">
+                <label class="form-label" for="studentNumber">Student Number</label>
+                <input id="studentNumber" class="input" value="12345678" />
+              </div>
+              <div class="form-col">
+                <label class="form-label" for="email">Email</label>
+                <input id="email" class="input" value="student@nwu.ac.za" />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-col">
+                <label class="form-label" for="campus">Campus</label>
+                <input id="campus" class="input" value="Potchefstroom" />
+              </div>
+              <div class="form-col">
+                <label class="form-label" for="faculty">Faculty</label>
+                <input id="faculty" class="input" value="Engineering" />
+              </div>
+            </div>
+            <div class="form-actions">
+              <button class="btn btn-primary" type="submit">Save Changes</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="card form-section">
+          <h3>Update Password</h3>
+          <form id="password-form">
+            <div class="form-row">
+              <div class="form-col">
+                <label class="form-label" for="currentPassword">Current Password</label>
+                <input id="currentPassword" class="input" type="password" />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-col">
+                <label class="form-label" for="newPassword">New Password</label>
+                <input id="newPassword" class="input" type="password" />
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-col">
+                <label class="form-label" for="confirmPassword">Confirm New Password</label>
+                <input id="confirmPassword" class="input" type="password" />
+              </div>
+            </div>
+            <div class="form-actions">
+              <button class="btn btn-primary" type="submit">Update Password</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="../js/app.js"></script>
+</body>
+</html>

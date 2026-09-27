@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>BikeGuard - Login</title>
+  <link rel="stylesheet" href="css/global.css">
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" aria-label="Brand panel">
+      <div class="brand-main">
+        <div class="logo"><img src="images/logo.svg" alt="BikeGuard" /></div>
+        <h1>BikeGuard</h1>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="center-card">
+        <h2>Welcome to BikeGuard</h2>
+        <p class="muted">Select your role to continue</p>
+
+        <div class="role-cards">
+          <a class="role-card" href="student/my-bikes.html" data-role="student">
+            <div class="role-icon">👤</div>
+            <div class="role-body">
+              <div class="role-title">Student / Staff</div>
+              <div class="role-desc">Manage your bikes, registrations and account</div>
+            </div>
+            <div class="role-arrow">›</div>
+          </a>
+
+          <a class="role-card" href="guard/gate-board.html" data-role="guard">
+            <div class="role-icon">🛡️</div>
+            <div class="role-body">
+              <div class="role-title">Security Guard</div>
+              <div class="role-desc">Monitor gates, checks and alarms</div>
+            </div>
+            <div class="role-arrow">›</div>
+          </a>
+
+          <a class="role-card" href="admin/registrations.html" data-role="admin">
+            <div class="role-icon">⚙️</div>
+            <div class="role-body">
+              <div class="role-title">Administrator</div>
+              <div class="role-desc">Manage users, registrations, tags and reports</div>
+            </div>
+            <div class="role-arrow">›</div>
+          </a>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>

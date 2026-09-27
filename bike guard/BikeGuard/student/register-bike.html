@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>BikeGuard - Register Bike</title>
+  <link rel="stylesheet" href="../css/global.css">
+  <link rel="stylesheet" href="register-bike.css">
+</head>
+<body>
+  <div class="app page">
+    <nav class="sidebar-nav">
+      <div>
+        <div class="brand" style="padding:16px 18px 10px; color:white;">
+          <div class="logo"><img src="../images/logo.svg" alt="BikeGuard" /></div>
+          <div style="margin-left:10px;"><h1 style="font-size:16px; margin:0;">BikeGuard</h1></div>
+        </div>
+        <div class="menu">
+          <a href="my-bikes.html">My Bikes</a>
+          <a href="register-bike.html" class="active">Register Bike</a>
+          <a href="account.html">Account</a>
+        </div>
+      </div>
+      <div>
+        <div class="user-details">
+          <div class="user-icon">👤</div>
+          <div>
+            <div id="sidebar-user-name" class="user-name">Student User</div>
+            <div id="sidebar-user-id" class="user-id">NWU12345</div>
+          </div>
+        </div>
+        <button id="signout-button" class="signout-link" type="button">Sign out</button>
+      </div>
+    </nav>
+
+    <main class="main">
+      <div class="container">
+        <h2>Register a Bike</h2>
+        <p class="subheading">Submit your bike for registration and tagging.</p>
+
+        <div class="card form-section">
+          <form id="register-form">
+            <div class="form-row">
+              <div class="form-col">
+                <label class="form-label">Photo *</label>
+                <div class="file-upload">
+                  <input id="bikePhoto" type="file" accept="image/*" required />
+                  <div id="photo-preview" class="upload-box"><span>Add photo</span></div>
+                  <div id="photo-help" class="input-note">No file chosen</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-col">
+                <label class="form-label" for="bikeName">Bike Name *</label>
+                <input id="bikeName" class="input" name="bikeName" placeholder="e.g. Mountain bike" required />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-col">
+                <label class="form-label" for="make">Make *</label>
+                <input id="make" class="input" name="make" placeholder="e.g. Trek" required />
+              </div>
+              <div class="form-col">
+                <label class="form-label" for="model">Model *</label>
+                <input id="model" class="input" name="model" placeholder="e.g. Marlin 5" required />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-col">
+                <label class="form-label" for="color">Colour *</label>
+                <input id="color" class="input" name="color" placeholder="e.g. Black" required />
+              </div>
+            </div>
+
+            <div class="inline-note">
+              RFID tags are issued by the campus security team. Students do not create or receive tags through this form.
+            </div>
+
+            <div class="form-actions">
+              <button class="btn btn-primary" type="submit">Send for Approval</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="../js/app.js"></script>
+</body>
+</html>
