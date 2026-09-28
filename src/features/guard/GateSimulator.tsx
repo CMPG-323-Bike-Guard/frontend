@@ -96,7 +96,7 @@ export function GateSimulator({ gates }: { gates: Gate[] }) {
           </Button>
           {activeGate?.mode === 'automated' ? (
             <Button
-              variant="secondary"
+              variant="subtle"
               disabled={busy}
               onClick={() =>
                 run(
@@ -108,7 +108,7 @@ export function GateSimulator({ gates }: { gates: Gate[] }) {
               Simulate a reader outage
             </Button>
           ) : (
-            <Button variant="secondary" disabled>
+            <Button variant="subtle" disabled>
               Gate is already on manual checks
             </Button>
           )}

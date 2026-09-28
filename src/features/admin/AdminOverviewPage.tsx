@@ -76,7 +76,7 @@ export function AdminOverviewPage() {
           <CardHeader
             title="Waiting for review"
             description="New registrations need a tag allocated before the gate can recognise the bike."
-            action={<LinkButton to="/admin/registrations" variant="secondary" size="sm">Open queue</LinkButton>}
+            action={<LinkButton to="/admin/registrations" variant="subtle" size="sm">Open queue</LinkButton>}
           />
           <CardBody className="py-0">
             {pending.isLoading && <SkeletonRows rows={3} className="py-4" />}
@@ -107,7 +107,7 @@ export function AdminOverviewPage() {
           <CardHeader
             title="Tags to hand over"
             description="Approved registrations waiting for the student to collect and fit the tag."
-            action={<LinkButton to="/admin/tags" variant="secondary" size="sm">Open tags</LinkButton>}
+            action={<LinkButton to="/admin/tags" variant="subtle" size="sm">Open tags</LinkButton>}
           />
           <CardBody className="py-0">
             {awaitingCollection.isLoading && <SkeletonRows rows={3} className="py-4" />}
@@ -139,7 +139,7 @@ export function AdminOverviewPage() {
         <CardHeader
           title="Latest activity"
           description="Every administrative action is traceable to a person and a time."
-          action={<LinkButton to="/admin/audit" variant="secondary" size="sm">Full audit trail</LinkButton>}
+          action={<LinkButton to="/admin/audit" variant="subtle" size="sm">Full audit trail</LinkButton>}
         />
         <CardBody className="py-0">
           {audit.isLoading && <SkeletonRows rows={4} className="py-4" />}

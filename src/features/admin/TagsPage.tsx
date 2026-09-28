@@ -190,7 +190,7 @@ export function TagsPage() {
                             </Button>
                           )}
                           {view.tag!.status !== 'deactivated' && (
-                            <Button size="sm" variant="secondary" onClick={() => setReplacing(view)}>
+                            <Button size="sm" variant="subtle" onClick={() => setReplacing(view)}>
                               Replace
                             </Button>
                           )}

@@ -63,7 +63,7 @@ export function MyBikesPage() {
       )}
 
       {unread > 0 && (
-        <Alert tone="info" action={<LinkButton to="/notifications" variant="secondary" size="sm">Open</LinkButton>}>
+        <Alert tone="info" action={<LinkButton to="/notifications" variant="subtle" size="sm">Open</LinkButton>}>
           You have {unread} unread {unread === 1 ? 'message' : 'messages'} from Protection Services.
         </Alert>
       )}

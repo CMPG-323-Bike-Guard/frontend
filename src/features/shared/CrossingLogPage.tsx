@@ -112,7 +112,7 @@ export function CrossingLogPage({
         actions={
           canExport ? (
             <Button
-              variant="secondary"
+              variant="subtle"
               icon={<Download className="h-4 w-4" />}
               onClick={exportCsv}
               disabled={!crossings.data?.length}
@@ -235,7 +235,7 @@ export function CrossingLogPage({
                 description="Widen the dates or clear the search to see the full log."
                 action={
                   filtered ? (
-                    <Button variant="secondary" onClick={clearFilters}>
+                    <Button variant="subtle" onClick={clearFilters}>
                       Clear filters
                     </Button>
                   ) : undefined

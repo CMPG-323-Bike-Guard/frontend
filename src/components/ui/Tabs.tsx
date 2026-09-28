@@ -1,4 +1,5 @@
 import { cx } from '@/lib/cx';
+import { Button } from './Button';
 
 export interface TabOption<T extends string> {
   value: T;
@@ -25,24 +26,23 @@ export function Tabs<T extends string>({
       {options.map((option) => {
         const selected = option.value === value;
         return (
-          <button
+          <Button
             key={option.value}
             type="button"
             role="tab"
             aria-selected={selected}
             onClick={() => onChange(option.value)}
-            className={cx(
-              'rounded-pill border px-3 py-1.5 text-sm font-semibold transition-colors',
-              selected
-                ? 'border-ink-900 bg-ink-900 text-white'
-                : 'border-ink-200 bg-white text-ink-700 hover:border-ink-300 hover:bg-ink-50',
-            )}
+            size="sm"
+            variant={selected ? 'dark' : 'subtle'}
+            className={selected ? 'cursor-pointer border border-ink-900' : undefined}
           >
-            {option.label}
-            {option.count !== undefined && (
-              <span className={cx('ml-1.5 text-xs', selected ? 'text-white/70' : 'text-ink-400')}>{option.count}</span>
-            )}
-          </button>
+            <span className="flex items-center gap-1.5">
+              {option.label}
+              {option.count !== undefined && (
+                <span className={cx('text-xs', selected ? 'text-white/70' : 'text-ink-400')}>{option.count}</span>
+              )}
+            </span>
+          </Button>
         );
       })}
     </div>

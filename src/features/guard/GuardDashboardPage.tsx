@@ -151,34 +151,30 @@ export function GuardDashboardPage() {
         <fieldset className="flex flex-wrap items-center gap-2">
           <legend className="sr-only">Filter the board by gate</legend>
           <span className="text-sm font-medium text-ink-600">Showing</span>
-          <button
+          <Button
             type="button"
             onClick={() => setSelectedGateId(null)}
             aria-pressed={selectedGateId === null}
-            className={cx(
-              'cursor-pointer rounded-pill border px-3 py-1.5 text-sm font-semibold',
-              selectedGateId === null
-                ? 'border-ink-900 bg-ink-900 text-white'
-                : 'border-ink-200 bg-white text-ink-700 hover:bg-ink-50',
-            )}
+            size="sm"
+            variant={selectedGateId === null ? 'dark' : 'subtle'}
+            className={selectedGateId === null ? 'cursor-pointer border border-ink-900' : undefined}
           >
             All gates
-          </button>
+          </Button>
           {gateList.map((gate) => {
             const active = selectedGateId === gate.gateId;
             return (
-              <button
+              <Button
                 key={gate.gateId}
                 type="button"
                 onClick={() => setSelectedGateId(gate.gateId)}
                 aria-pressed={active}
-                className={cx(
-                  'cursor-pointer rounded-pill border px-3 py-1.5 text-sm font-semibold',
-                  active ? 'border-ink-900 bg-ink-900 text-white' : 'border-ink-200 bg-white text-ink-700 hover:bg-ink-50',
-                )}
+                size="sm"
+                variant={active ? 'dark' : 'subtle'}
+                className={active ? 'cursor-pointer border border-ink-900' : undefined}
               >
                 {gate.name}
-              </button>
+              </Button>
             );
           })}
         </fieldset>

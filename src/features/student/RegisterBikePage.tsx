@@ -56,7 +56,7 @@ export function RegisterBikePage() {
             </div>
             <div className="flex gap-2">
               <LinkButton to="/my-bikes">Back to my bikes</LinkButton>
-              <Button variant="secondary" onClick={() => setDone(null)}>
+              <Button variant="subtle" onClick={() => setDone(null)}>
                 Register another bike
               </Button>
             </div>

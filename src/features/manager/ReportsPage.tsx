@@ -54,7 +54,7 @@ export function ReportsPage() {
         description="What the pilot gate has actually done, as evidence for the rollout decision."
         actions={
           <Button
-            variant="secondary"
+            variant="subtle"
             icon={<Download className="h-4 w-4" />}
             onClick={exportSummary}
             disabled={!reports.data}

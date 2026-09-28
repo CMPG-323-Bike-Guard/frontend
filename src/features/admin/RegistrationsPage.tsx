@@ -145,7 +145,7 @@ export function RegistrationsPage() {
           <EmptyState
             title="Nothing in this list"
             description="Try another status, or register a bike on behalf of a student at the service point."
-            action={<Button variant="secondary" onClick={() => setOnBehalfOpen(true)}>Register for a student</Button>}
+            action={<Button variant="subtle" onClick={() => setOnBehalfOpen(true)}>Register for a student</Button>}
           />
         </Card>
       )}
@@ -190,7 +190,7 @@ export function RegistrationsPage() {
                     <Button size="sm" onClick={() => setApproving(view)}>
                       Approve and issue a tag
                     </Button>
-                    <Button size="sm" variant="secondary" onClick={() => setRejecting(view)}>
+                    <Button size="sm" variant="subtle" onClick={() => setRejecting(view)}>
                       Send back
                     </Button>
                   </div>

@@ -167,7 +167,7 @@ export function AlarmCard({
             </Button>
             {alarm.status === 'open' && (
               <Button
-                variant="secondary"
+                variant="subtle"
                 icon={<ArrowUpRight className="h-4 w-4" />}
                 onClick={() => setDialog('escalated')}
               >

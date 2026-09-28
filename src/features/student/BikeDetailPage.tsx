@@ -156,7 +156,7 @@ export function BikeDetailPage() {
           action={
             <Button
               size="sm"
-              variant="secondary"
+              variant="subtle"
               loading={submitBike.isPending}
               onClick={() => run(() => submitBike.mutateAsync({ bikeId: bike.bikeId, actorUserId: user.userId }), 'Sent back for review.')}
             >
@@ -200,7 +200,7 @@ export function BikeDetailPage() {
           description="Their card opens the gate with this bike's tag. You can withdraw this at any time."
           action={
             bike.status === 'active' ? (
-              <Button variant="secondary" size="sm" icon={<UserPlus className="h-4 w-4" />} onClick={() => setDialog('share')}>
+              <Button variant="subtle" size="sm" icon={<UserPlus className="h-4 w-4" />} onClick={() => setDialog('share')}>
                 Authorise a student
               </Button>
             ) : undefined

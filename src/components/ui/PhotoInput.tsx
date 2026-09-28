@@ -73,7 +73,7 @@ export function PhotoInput({
         </p>
         <p className="mt-1 text-sm text-ink-500">JPG, PNG or WebP, up to 5 MB.</p>
         <div className="mt-3 flex gap-2">
-          <Button type="button" variant="secondary" size="sm" loading={reading} onClick={() => inputRef.current?.click()}>
+          <Button type="button" variant="subtle" size="sm" loading={reading} onClick={() => inputRef.current?.click()}>
             {value ? 'Choose a different photo' : 'Choose a photo'}
           </Button>
           {value && (
