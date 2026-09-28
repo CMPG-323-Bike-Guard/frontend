@@ -1,0 +1,81 @@
+@import "tailwindcss";
+
+@theme {
+  --color-paper: #F8F9FC;
+  --color-ink-950: #111827;
+  --color-ink-900: #1F2937;
+  --color-ink-500: #6B7280;
+  --color-ink-50: #F9FAFB;
+  --color-signal-600: #6C3D91;
+  --color-signal-500: #6C3D91;
+}
+
+/* BikeGuard base styling */
+
+:root {
+  color-scheme: light;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background-color: #F8F9FC;
+  color: #1F2937;
+  font-family: Arial, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-weight: 600;
+  color: #1F2937;
+}
+
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid #6C3D91;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Physical boom-gate hazard stripe */
+.boom-bar {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    #C0201A 0 14px,
+    #F2F3F7 14px 28px
+  );
+}
+
+.prose-measure {
+  max-width: 68ch;
+}
+
+.skip-link {
+  position: absolute;
+  left: -9999px;
+}
+
+.skip-link:focus {
+  position: fixed;
+  left: 1rem;
+  top: 1rem;
+  z-index: 50;
+  background-color: #1F2937;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

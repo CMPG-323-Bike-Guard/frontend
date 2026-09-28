@@ -1,0 +1,208 @@
+import { useMemo, useState } from 'react';
+import { Download, Search } from 'lucide-react';
+import type { CrossingResult } from '@/types';
+import { useCrossings, useGates } from '@/api/queries';
+import type { CrossingFilters } from '@/api/client';
+import { downloadCsv, formatDateTime, toCsv } from '@/lib/format';
+import { MISMATCH_REASON_META } from '@/lib/constants';
+import { Alert } from '@/components/ui/Alert';
+import { Button } from '@/components/ui/Button';
+import { Card, CardBody, CardHeader } from '@/components/ui/Card';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { Field } from '@/components/ui/Field';
+import { Input, Select } from '@/components/ui/Input';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { SkeletonRows } from '@/components/ui/Spinner';
+import { Tabs } from '@/components/ui/Tabs';
+import { CrossingTable } from '@/components/domain/CrossingTable';
+
+/**
+ * FR-ADM-05: search the crossing log by student, bike, time range and gate.
+ *
+ * This is the screen that replaces paging through a paper logbook during an
+ * investigation, so the filters mirror the questions actually asked: who, what
+ * bike, which gate, when.
+ */
+export function CrossingLogPage({ canExport = false }: { canExport?: boolean }) {
+  const gates = useGates();
+
+  const [query, setQuery] = useState('');
+  const [gateId, setGateId] = useState('');
+  const [result, setResult] = useState<CrossingResult | 'all'>('all');
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
+
+  const filters = useMemo<CrossingFilters>(
+    () => ({
+      query: query.trim() || undefined,
+      gateId: gateId || undefined,
+      result: result === 'all' ? undefined : result,
+      from: from || undefined,
+      to: to || undefined,
+      limit: 200,
+    }),
+    [query, gateId, result, from, to],
+  );
+
+  const crossings = useCrossings(filters);
+  const filtered = query || gateId || result !== 'all' || from || to;
+
+  function exportCsv() {
+    const rows = (crossings.data ?? []).map((row) => ({
+      timestamp: formatDateTime(row.event.timestamp),
+      gate: row.gateName,
+      person: row.userName ?? 'Unidentified card',
+      student_staff_number: row.studentStaffNumber ?? '',
+      bike: row.bikeName ?? '',
+      card_ref: row.event.cardRef ?? '',
+      tag_ref: row.event.tagRef ?? '',
+      result: row.event.result,
+      reason: row.event.mismatchReason ? MISMATCH_REASON_META[row.event.mismatchReason].label : '',
+      verification_ms: row.event.verificationMs ?? '',
+      recorded_offline: row.event.offline ? 'yes' : 'no',
+    }));
+    downloadCsv(`bikeguard-crossings-${new Date().toISOString().slice(0, 10)}.csv`, toCsv(rows));
+  }
+
+  function clearFilters() {
+    setQuery('');
+    setGateId('');
+    setResult('all');
+    setFrom('');
+    setTo('');
+  }
+
+  return (
+    <div className="flex flex-col gap-6">
+      <PageHeader
+        title="Crossing log"
+        description="Every read at every gate, with the result the system recorded at the time."
+        actions={
+          canExport ? (
+            <Button
+              variant="secondary"
+              icon={<Download className="h-4 w-4" />}
+              onClick={exportCsv}
+              disabled={!crossings.data?.length}
+            >
+              Export as CSV
+            </Button>
+          ) : undefined
+        }
+      />
+
+      <Card>
+        <CardHeader title="Find a crossing" description="Search by name, student number, bike or tag reference." />
+        <CardBody className="flex flex-col gap-4">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <Field label="Search" className="xl:col-span-2">
+              {({ id }) => (
+                <div className="relative">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" aria-hidden="true" />
+                  <Input
+                    id={id}
+                    className="pl-9"
+                    placeholder="Name, student number, bike or tag"
+                    value={query}
+                    onChange={(event) => setQuery(event.target.value)}
+                  />
+                </div>
+              )}
+            </Field>
+
+            <Field label="Gate">
+              {({ id }) => (
+                <Select
+                  id={id}
+                  value={gateId}
+                  onChange={(event) => {
+                    setGateId(event.target.value);
+                  }}
+                >
+                  <option value="">All gates</option>
+                  {(gates.data ?? [])
+                    .filter((gate) => gate.commissioned)
+                    .map((gate) => (
+                      <option key={gate.gateId} value={gate.gateId}>
+                        {gate.name}
+                      </option>
+                    ))}
+                </Select>
+              )}
+            </Field>
+
+            <Field label="From">
+              {({ id }) => (
+                <Input
+                  id={id}
+                  type="date"
+                  value={from}
+                  max={to || undefined}
+                  onChange={(event) => setFrom(event.target.value)}
+                />
+              )}
+            </Field>
+
+            <Field label="To">
+              {({ id }) => (
+                <Input
+                  id={id}
+                  type="date"
+                  value={to}
+                  min={from || undefined}
+                  onChange={(event) => setTo(event.target.value)}
+                />
+              )}
+            </Field>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <Tabs<CrossingResult | 'all'>
+              label="Filter by result"
+              value={result}
+              onChange={setResult}
+              options={[
+                { value: 'all', label: 'All results' },
+                { value: 'match', label: 'Matches' },
+                { value: 'mismatch', label: 'Mismatches' },
+                { value: 'manual', label: 'Logged by hand' },
+              ]}
+            />
+            {filtered && (
+              <Button variant="ghost" size="sm" onClick={clearFilters}>
+                Clear filters
+              </Button>
+            )}
+          </div>
+        </CardBody>
+      </Card>
+
+      <Card>
+        <CardHeader
+          title={crossings.data ? `${crossings.data.length} crossings` : 'Crossings'}
+          description={crossings.data?.length === 200 ? 'Showing the 200 most recent matches. Narrow the dates to see more.' : undefined}
+        />
+        <CardBody className={crossings.data?.length ? undefined : 'py-0'}>
+          {crossings.isLoading && <SkeletonRows rows={6} className="py-4" />}
+          {crossings.isError && <Alert tone="alert">{(crossings.error as Error).message}</Alert>}
+          {crossings.isSuccess &&
+            (crossings.data.length === 0 ? (
+              <EmptyState
+                title="No crossings match these filters"
+                description="Widen the dates or clear the search to see the full log."
+                action={
+                  filtered ? (
+                    <Button variant="secondary" onClick={clearFilters}>
+                      Clear filters
+                    </Button>
+                  ) : undefined
+                }
+              />
+            ) : (
+              <CrossingTable rows={crossings.data} />
+            ))}
+        </CardBody>
+      </Card>
+    </div>
+  );
+}
