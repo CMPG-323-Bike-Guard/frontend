@@ -1,11 +1,12 @@
 
+import { lazy, Suspense } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { AuthProvider, useAuth } from '@/auth/AuthContext';
 import { ProtectedRoute } from '@/auth/ProtectedRoute';
 import { AppShell } from '@/components/layout/AppShell';
 import { ToastProvider } from '@/components/ui/Toast';
 import { ROLE_HOME } from '@/lib/constants';
-import { FullPageSpinner } from '@/components/ui/Spinner';
+import { FullPageSpinner, SkeletonRows } from '@/components/ui/Spinner';
 
 import { SignInPage } from '@/features/shared/SignInPage';
 import { NotFoundPage } from '@/features/shared/NotFoundPage';
@@ -25,6 +26,10 @@ import { RegistrationsPage } from '@/features/admin/RegistrationsPage';
 import { TagsPage } from '@/features/admin/TagsPage';
 import { PeoplePage } from '@/features/admin/PeoplePage';
 import { AuditPage } from '@/features/admin/AuditPage';
+
+const AdminReportsPage = lazy(() =>
+  import('@/features/admin/ReportsPage').then((module) => ({ default: module.ReportsPage })),
+);
 
 /** Sends a signed-in person to the screen their role starts on. */
 function RoleHome() {
@@ -101,6 +106,14 @@ export default function App() {
                 />
                 <Route path="/admin/people" element={<PeoplePage />} />
                 <Route path="/admin/audit" element={<AuditPage />} />
+                <Route
+                  path="/reports"
+                  element={
+                    <Suspense fallback={<SkeletonRows rows={5} />}>
+                      <AdminReportsPage />
+                    </Suspense>
+                  }
+                />
               </Route>
 
             </Route>
