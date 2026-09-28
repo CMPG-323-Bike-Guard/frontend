@@ -32,7 +32,7 @@ export function CardHeader({
   className?: string;
 }) {
   return (
-    <header className={cx('flex flex-wrap items-start justify-between gap-3 border-b border-ink-100 px-5 py-4', className)}>
+    <header className={cx('flex flex-wrap items-start justify-between gap-3 rounded-t-card border-b border-ink-100 bg-card-header px-5 py-4', className)}>
       <div className="min-w-0">
         <h2 className="text-lg font-semibold text-ink-900">{title}</h2>
         {description && <p className="mt-0.5 text-sm text-ink-500 prose-measure">{description}</p>}
