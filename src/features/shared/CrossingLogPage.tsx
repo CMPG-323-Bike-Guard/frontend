@@ -32,7 +32,7 @@ function localDateValue() {
  */
 export function CrossingLogPage({
   canExport = false,
-  preventFutureDates = false,
+  preventFutureDates = true,
 }: {
   canExport?: boolean;
   preventFutureDates?: boolean;

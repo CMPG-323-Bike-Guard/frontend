@@ -39,5 +39,5 @@ export function AlarmStatusBadge({ status }: { status: AlarmStatus }) {
 export function ResultBadge({ result }: { result: CrossingResult }) {
   if (result === 'match') return <Badge tone="ok" variant="tag-active">Match</Badge>;
   if (result === 'mismatch') return <Badge tone="alert" variant="result-mismatch">Mismatch</Badge>;
-  return <Badge tone="warn">Manual</Badge>;
+  return <Badge tone="warn" variant="tag-ready">Manual</Badge>;
 }
