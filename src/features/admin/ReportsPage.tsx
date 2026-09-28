@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Download } from 'lucide-react';
 import {
   Bar,
   BarChart,
@@ -10,9 +11,9 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { useCrossings, useGates, useReports, useStats } from '@/api/queries';
+import { useCrossings, useGates, useStats } from '@/api/queries';
 import type { CrossingView, Gate } from '@/types';
-import { formatNumber, formatPercent } from '@/lib/format';
+import { downloadCsv, formatNumber, formatPercent, toCsv } from '@/lib/format';
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
 import { Card, CardBody, CardHeader } from '@/components/ui/Card';
@@ -20,6 +21,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { SkeletonRows } from '@/components/ui/Spinner';
 import { StatTile } from '@/components/ui/StatTile';
+import { useToast } from '@/components/ui/Toast';
 import { cx } from '@/lib/cx';
 
 const REPORT_PERIODS = [7, 14, 30] as const;
@@ -103,7 +105,7 @@ export function ReportsPage() {
   const stats = useStats();
   const gates = useGates();
   const crossings = useCrossings({ limit: 1000 });
-  const reports = useReports(period);
+  const toast = useToast();
 
   const today = new Date();
   const todayKey = localDateKey(today);
@@ -119,25 +121,71 @@ export function ReportsPage() {
     ? (crossings.data ?? []).filter((crossing) => localDateKey(new Date(crossing.event.timestamp)) === selectedDate)
     : [];
   const selectedByGate = countByGate(gates.data ?? [], selectedCrossings);
+  const periodRows = Array.from({ length: period }, (_, index) => {
+    const date = new Date(year, month, today.getDate() - (period - index - 1));
+    const dateKey = localDateKey(date);
+    const dayCrossings = (crossings.data ?? []).filter(
+      (crossing) => localDateKey(new Date(crossing.event.timestamp)) === dateKey,
+    );
+    return (gates.data ?? []).map((gate) => {
+      const gateCrossings = gate.commissioned
+        ? dayCrossings.filter((crossing) => crossing.event.gateId === gate.gateId)
+        : [];
+      return {
+        date: dateKey,
+        gate: gate.name,
+        crossings: gateCrossings.length,
+        matches: gateCrossings.filter((crossing) => crossing.event.result === 'match').length,
+        mismatches: gateCrossings.filter((crossing) => crossing.event.result === 'mismatch').length,
+        manual: gateCrossings.filter((crossing) => crossing.event.result === 'manual').length,
+      };
+    });
+  }).flat();
   const historyData = Array.from({ length: period }, (_, index) => {
     const date = new Date(year, month, today.getDate() - (period - index - 1));
-    const label = localDateLabel(date);
-    const points = (reports.data?.throughputByDay ?? []).filter((point) => point.label === label);
-    return {
-      label,
-      count: points.reduce((total, point) => total + point.matches + point.mismatches + point.manual, 0),
-    };
+    const dateKey = localDateKey(date);
+    const dayRows = periodRows.filter((row) => row.date === dateKey);
+    return { label: localDateLabel(date), count: dayRows.reduce((total, row) => total + row.crossings, 0) };
   });
-  const reportError = stats.error ?? gates.error ?? crossings.error ?? reports.error;
+  const reportError = stats.error ?? gates.error ?? crossings.error;
+  const exportDisabled = stats.isLoading || gates.isLoading || crossings.isLoading || !crossings.data?.length || periodRows.length === 0;
   const selectedDateLabel = selectedDate
     ? new Intl.DateTimeFormat('en-ZA', { day: 'numeric', month: 'long', year: 'numeric' }).format(
         new Date(Number(selectedDate.slice(0, 4)), Number(selectedDate.slice(5, 7)) - 1, Number(selectedDate.slice(8, 10))),
       )
     : '';
 
+  function exportReport() {
+    if (exportDisabled) return;
+    const startDate = localDateKey(new Date(year, month, today.getDate() - (period - 1)));
+    const rows = periodRows.map(({ date, gate, crossings: count, matches, mismatches, manual }) => ({
+      date,
+      gate,
+      crossings: count,
+      matches,
+      mismatches,
+      manual,
+    }));
+    downloadCsv(`bikeguard-report-${startDate}_to_${todayKey}.csv`, toCsv(rows));
+    toast.confirm('Report exported');
+  }
+
   return (
     <div className="flex flex-col gap-6">
-      <PageHeader title="Pilot Reports" description="System performance and usage insights." />
+      <PageHeader
+        title="Pilot Reports"
+        description="System performance and usage insights."
+        actions={
+          <Button
+            variant="subtle"
+            icon={<Download className="h-4 w-4" />}
+            onClick={exportReport}
+            disabled={exportDisabled}
+          >
+            Export as CSV
+          </Button>
+        }
+      />
 
       {reportError && <Alert tone="alert">{reportError.message}</Alert>}
 
@@ -185,9 +233,9 @@ export function ReportsPage() {
               </Button>
             ))}
           </div>
-          {reports.isLoading ? (
+          {crossings.isLoading ? (
             <SkeletonRows rows={3} />
-          ) : reports.data ? (
+          ) : crossings.data ? (
             <>
               <div className="h-72 min-w-0" aria-hidden="true">
                 <ResponsiveContainer width="100%" height="100%">
@@ -211,7 +259,7 @@ export function ReportsPage() {
                   ))}
                 </tbody>
               </table>
-              {reports.data.throughputByDay.length === 0 && (
+              {crossings.data.length === 0 && (
                 <p className="text-sm text-ink-500">No crossings recorded in this period.</p>
               )}
             </>
