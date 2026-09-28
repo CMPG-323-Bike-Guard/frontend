@@ -74,6 +74,7 @@ export function LinkButton({
   className,
   children,
   icon,
+  ariaLabel,
 }: {
   to: string;
   variant?: Variant;
@@ -81,9 +82,10 @@ export function LinkButton({
   className?: string;
   children: ReactNode;
   icon?: ReactNode;
+  ariaLabel?: string;
 }) {
   return (
-    <Link to={to} className={cx(base, variants[variant], sizes[size], className)}>
+    <Link to={to} aria-label={ariaLabel} className={cx(base, variants[variant], sizes[size], className)}>
       {icon}
       {children}
     </Link>

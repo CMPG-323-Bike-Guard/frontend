@@ -32,7 +32,11 @@ export function AdminOverviewPage() {
           tone="warn"
           variant="orange"
           title={`${alarms.data.length} alarm${alarms.data.length === 1 ? '' : 's'} still open`}
-          action={<LinkButton to="/reports/alarms" variant="secondary" size="sm">Review</LinkButton>}
+          action={
+            <LinkButton to="/reports" variant="secondary" size="sm" ariaLabel="Review open alarms">
+              Review
+            </LinkButton>
+          }
         >
           A guard has not yet recorded what they found at the gate.
         </Alert>
