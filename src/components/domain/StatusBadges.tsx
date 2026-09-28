@@ -9,7 +9,17 @@ export function BikeStatusBadge({ status }: { status: BikeStatus }) {
 
 export function TagStatusBadge({ status }: { status: TagStatus }) {
   const meta = TAG_STATUS_META[status];
-  return <Badge tone={meta.tone} variant={status === 'active' ? 'tag-active' : 'default'}>{meta.label}</Badge>;
+  const variant =
+    status === 'active'
+      ? 'tag-active'
+      : status === 'awaiting_collection'
+        ? 'tag-ready'
+        : status === 'lost'
+          ? 'tag-lost'
+          : status === 'deactivated'
+            ? 'result-mismatch'
+          : 'default';
+  return <Badge tone={meta.tone} variant={variant}>{meta.label}</Badge>;
 }
 
 export function GateHealthBadge({ health }: { health: GateHealth }) {

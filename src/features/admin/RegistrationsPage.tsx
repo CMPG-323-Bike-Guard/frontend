@@ -209,7 +209,7 @@ export function RegistrationsPage() {
         description={approving ? `${approving.bike.name} · ${approving.owner.name}` : undefined}
         footer={
           <>
-            <Button variant="ghost" onClick={() => setApproving(null)}>
+            <Button variant="subtle" onClick={() => setApproving(null)}>
               Cancel
             </Button>
             <Button loading={approve.isPending} onClick={submitApproval}>
@@ -250,10 +250,10 @@ export function RegistrationsPage() {
         description={rejecting ? `${rejecting.bike.name} · ${rejecting.owner.name}` : undefined}
         footer={
           <>
-            <Button variant="ghost" onClick={() => setRejecting(null)}>
+            <Button variant="subtle" onClick={() => setRejecting(null)}>
               Cancel
             </Button>
-            <Button variant="danger" loading={reject.isPending} onClick={submitRejection}>
+            <Button variant="dangerOutline" loading={reject.isPending} onClick={submitRejection}>
               Send back
             </Button>
           </>
@@ -299,6 +299,7 @@ export function RegistrationsPage() {
         <BikeForm
           submitLabel="Register and queue for a tag"
           submitting={createBike.isPending}
+          cancelVariant="subtle"
           onSubmit={registerOnBehalf}
           onCancel={() => setOnBehalfOpen(false)}
         />

@@ -15,11 +15,12 @@ const tones: Record<Tone, string> = {
   info: 'bg-signal-50 text-signal-700 border-signal-300/50',
 };
 
-type Variant = 'default' | 'tag-ready' | 'tag-active' | 'result-mismatch' | 'gate-warning';
+type Variant = 'default' | 'tag-ready' | 'tag-active' | 'tag-lost' | 'result-mismatch' | 'gate-warning';
 
 const variants: Record<Exclude<Variant, 'default'>, string> = {
   'tag-ready': 'border-tag-notice-orange/40 bg-tag-notice-orange/10 text-ink-900',
   'tag-active': 'border-tag-status-green/40 bg-tag-status-green/10 text-ink-900',
+  'tag-lost': 'border-brand-purple/40 bg-card-header text-ink-900',
   'result-mismatch': 'border-gate-warning-border bg-gate-warning-background text-ink-900',
   'gate-warning': 'border-gate-warning-border bg-gate-warning-background text-ink-900',
 };

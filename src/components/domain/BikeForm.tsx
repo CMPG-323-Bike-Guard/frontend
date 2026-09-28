@@ -39,7 +39,7 @@ export function BikeForm({
   onCancel?(): void;
   submitClassName?: string;
   secondaryVariant?: 'secondary' | 'subtle';
-  cancelVariant?: 'ghost' | 'dangerOutline';
+  cancelVariant?: 'ghost' | 'subtle' | 'dangerOutline';
   photoRequired?: boolean;
 }) {
   const [name, setName] = useState(initial?.name ?? '');

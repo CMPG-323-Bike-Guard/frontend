@@ -195,7 +195,7 @@ export function TagsPage() {
                             </Button>
                           )}
                           {view.tag!.status !== 'deactivated' && (
-                            <Button size="sm" variant="ghost" onClick={() => setDeactivating(view)}>
+                            <Button size="sm" variant="dangerOutline" onClick={() => setDeactivating(view)}>
                               Deactivate
                             </Button>
                           )}
@@ -217,7 +217,7 @@ export function TagsPage() {
         description={replacing ? `${replacing.bike.name} · ${replacing.owner.name}` : undefined}
         footer={
           <>
-            <Button variant="ghost" onClick={() => setReplacing(null)}>
+            <Button variant="subtle" onClick={() => setReplacing(null)}>
               Cancel
             </Button>
             <Button loading={replace.isPending} onClick={submitReplacement}>
@@ -253,10 +253,10 @@ export function TagsPage() {
         description={deactivating ? `${deactivating.tag?.tagRef} · ${deactivating.owner.name}` : undefined}
         footer={
           <>
-            <Button variant="ghost" onClick={() => setDeactivating(null)}>
+            <Button variant="subtle" onClick={() => setDeactivating(null)}>
               Cancel
             </Button>
-            <Button variant="danger" loading={deactivate.isPending} onClick={submitDeactivation}>
+            <Button variant="dangerOutline" loading={deactivate.isPending} onClick={submitDeactivation}>
               Deactivate
             </Button>
           </>
