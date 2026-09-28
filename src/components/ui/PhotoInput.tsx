@@ -57,7 +57,7 @@ export function PhotoInput({
     <div
       className={cx(
         'flex flex-col gap-3 rounded-card border border-dashed p-4 sm:flex-row sm:items-center',
-        invalid ? 'border-alert-500 bg-alert-100/40' : 'border-ink-200 bg-ink-50/50',
+        invalid ? 'border-alert-500 bg-alert-100/40' : 'border-ink-200 bg-white',
       )}
     >
       {value ? (

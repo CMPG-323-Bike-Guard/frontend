@@ -75,7 +75,7 @@ export function AppShell() {
   );
 
   return (
-    <div className="min-h-screen bg-paper">
+    <div className="min-h-screen bg-portal-background">
       <a href="#main" className="skip-link">
         Skip to content
       </a>
