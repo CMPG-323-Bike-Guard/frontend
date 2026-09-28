@@ -83,7 +83,7 @@ export default function App() {
                 />
                 <Route
                   path="/guard/crossings"
-                  element={<CrossingLogPage />}
+                  element={<CrossingLogPage preventFutureDates />}
                 />
               </Route>
 

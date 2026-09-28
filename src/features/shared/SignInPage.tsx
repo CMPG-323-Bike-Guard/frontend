@@ -98,14 +98,13 @@ export function SignInPage() {
   }
 
   return (
-    <div className="grid min-h-screen lg:grid-cols-[1.05fr_1fr]">
+    <div className="grid min-h-screen lg:grid-cols-[minmax(0,0.62fr)_minmax(0,1fr)]">
 
       {/* =========================================================
           BIKEGUARD INFORMATION SECTION
           ========================================================= */}
       <section
-        className="relative hidden flex-col overflow-hidden px-10 py-12 text-white lg:flex"
-        style={{ backgroundColor: 'rgb(108, 61, 145)' }}
+        className="relative hidden flex-col overflow-hidden bg-brand-purple px-10 py-12 text-white lg:flex"
       >
 
         {/* BikeGuard logo */}

@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { AlarmStatus, BikeStatus, GateMode } from '@/types';
+import type { AlarmStatus, BikeStatus, GateMode, Notification } from '@/types';
 import { api, type BikeInput, type CrossingFilters } from './client';
 
 /** Query keys are namespaced so a mutation can invalidate exactly what changed. */
@@ -45,8 +45,12 @@ export function useRegistrations(status?: BikeStatus) {
   return useQuery({ queryKey: keys.registrations(status), queryFn: () => api.listRegistrations(status) });
 }
 
-export function useNotifications(userId: string) {
-  return useQuery({ queryKey: keys.notifications(userId), queryFn: () => api.listNotifications(userId) });
+export function useNotifications(userId?: string) {
+  return useQuery({
+    queryKey: keys.notifications(userId ?? ''),
+    queryFn: () => api.listNotifications(userId!),
+    enabled: Boolean(userId),
+  });
 }
 
 export function useStats() {
@@ -208,9 +212,29 @@ export function useReplaceTag() {
 }
 
 export function useMarkNotificationRead() {
-  const refresh = useRefresh();
+  const client = useQueryClient();
+  const notificationQueries = { queryKey: ['notifications'] as const };
   return useMutation({
     mutationFn: (notificationId: string) => api.markNotificationRead(notificationId),
-    onSuccess: refresh,
+    onMutate: async (notificationId) => {
+      await client.cancelQueries(notificationQueries);
+      const previous = client.getQueriesData<Notification[]>(notificationQueries);
+      client.setQueriesData<Notification[]>(notificationQueries, (current) =>
+        current?.map((notification) =>
+          notification.notificationId === notificationId
+            ? { ...notification, read: true }
+            : notification,
+        ),
+      );
+      return { previous };
+    },
+    onError: (_error, _notificationId, context) => {
+      context?.previous.forEach(([queryKey, notifications]) => {
+        client.setQueryData(queryKey, notifications);
+      });
+    },
+    onSettled: () => {
+      void client.invalidateQueries(notificationQueries);
+    },
   });
 }

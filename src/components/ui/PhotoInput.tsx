@@ -92,7 +92,7 @@ export function PhotoInput({
           )}
         </div>
         {problem && (
-          <p className="mt-2 text-sm font-medium text-alert-600" role="alert">
+          <p className="mt-2 text-sm font-medium text-action-red" role="alert">
             {problem}
           </p>
         )}

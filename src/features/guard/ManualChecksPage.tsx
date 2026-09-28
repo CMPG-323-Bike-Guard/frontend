@@ -3,9 +3,11 @@ import { ClipboardList } from 'lucide-react';
 import { useCurrentUser } from '@/auth/AuthContext';
 import { useCrossings, useGates, useManualCrossing, useSetGateMode } from '@/api/queries';
 import { ApiError } from '@/api/client';
+import { GATE_HEALTH_META } from '@/lib/constants';
 import { durationSince, formatTime } from '@/lib/format';
 import { hasErrors, requireText, validateStudentNumber, type FieldErrors } from '@/lib/validation';
 import { Alert } from '@/components/ui/Alert';
+import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card, CardBody, CardHeader } from '@/components/ui/Card';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -14,7 +16,6 @@ import { Input, Select, Textarea } from '@/components/ui/Input';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { SkeletonRows } from '@/components/ui/Spinner';
 import { useToast } from '@/components/ui/Toast';
-import { GateHealthBadge } from '@/components/domain/StatusBadges';
 
 type FormField = 'gateId' | 'studentNumber' | 'bikeDescription';
 
@@ -93,10 +94,22 @@ export function ManualChecksPage() {
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
-                    <GateHealthBadge health={gate.health} />
+                    <Badge
+                      tone={GATE_HEALTH_META[gate.health].tone}
+                      variant={
+                        gate.health === 'good'
+                          ? 'tag-active'
+                          : gate.health === 'warning'
+                            ? 'gate-warning'
+                            : 'default'
+                      }
+                    >
+                      {GATE_HEALTH_META[gate.health].label}
+                    </Badge>
                     <Button
-                      variant={gate.mode === 'manual' ? 'primary' : 'secondary'}
+                      variant={gate.mode === 'manual' ? 'primary' : 'warningOutline'}
                       size="sm"
+                      className="cursor-pointer"
                       loading={setGateMode.isPending}
                       onClick={() =>
                         setGateMode.mutate({

@@ -30,6 +30,7 @@ export function AdminOverviewPage() {
       {alarms.data && alarms.data.length > 0 && (
         <Alert
           tone="warn"
+          variant="orange"
           title={`${alarms.data.length} alarm${alarms.data.length === 1 ? '' : 's'} still open`}
           action={<LinkButton to="/reports/alarms" variant="secondary" size="sm">Review</LinkButton>}
         >

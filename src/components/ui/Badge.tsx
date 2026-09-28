@@ -15,12 +15,21 @@ const tones: Record<Tone, string> = {
   info: 'bg-signal-50 text-signal-700 border-signal-300/50',
 };
 
-export function Badge({ tone = 'neutral', children, className }: { tone?: Tone; children: ReactNode; className?: string }) {
+type Variant = 'default' | 'tag-ready' | 'tag-active' | 'result-mismatch' | 'gate-warning';
+
+const variants: Record<Exclude<Variant, 'default'>, string> = {
+  'tag-ready': 'border-tag-notice-orange/40 bg-tag-notice-orange/10 text-ink-900',
+  'tag-active': 'border-tag-status-green/40 bg-tag-status-green/10 text-ink-900',
+  'result-mismatch': 'border-gate-warning-border bg-gate-warning-background text-ink-900',
+  'gate-warning': 'border-gate-warning-border bg-gate-warning-background text-ink-900',
+};
+
+export function Badge({ tone = 'neutral', variant = 'default', children, className }: { tone?: Tone; variant?: Variant; children: ReactNode; className?: string }) {
   return (
     <span
       className={cx(
-        'inline-flex items-center gap-1.5 rounded-pill border px-2.5 py-0.5 text-xs font-semibold',
-        tones[tone],
+        'inline-flex w-fit items-center justify-center gap-1.5 rounded-pill border px-2.5 py-0.5 text-xs font-semibold',
+        variant === 'default' ? tones[tone] : variants[variant],
         className,
       )}
     >

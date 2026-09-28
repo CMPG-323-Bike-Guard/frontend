@@ -56,9 +56,9 @@ export function NotificationsPage() {
                     <p className="prose-measure mt-1 text-sm text-ink-700">{notification.body}</p>
                     {!notification.read && (
                       <Button
-                        variant="ghost"
+                        variant="subtle"
                         size="sm"
-                        className="mt-2 -ml-3"
+                        className="mt-2 -ml-3 hover:bg-ink-500/10"
                         onClick={() => markRead.mutate(notification.notificationId)}
                       >
                         Mark as read

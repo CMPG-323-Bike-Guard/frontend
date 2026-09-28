@@ -11,7 +11,7 @@ import { cx } from '@/lib/cx';
  * for accessibility.
  * 
  */
-type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'dark';
+type Variant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'dark' | 'subtle' | 'dangerOutline' | 'warningOutline';
 type Size = 'sm' | 'md' | 'lg';
 
 const base =
@@ -24,6 +24,9 @@ const variants: Record<Variant, string> = {
   ghost: 'text-ink-700 hover:bg-ink-50',
   danger: 'bg-alert-500 text-white hover:bg-alert-600',
   dark: 'bg-ink-900 text-white hover:bg-ink-800',
+  subtle: 'cursor-pointer border border-ink-200 bg-ink-50 text-ink-900 hover:bg-ink-100',
+  dangerOutline: 'cursor-pointer border border-action-red bg-action-red-tint text-action-red hover:bg-action-red-tint-hover',
+  warningOutline: 'cursor-pointer border border-tag-notice-orange/40 bg-tag-notice-orange/10 text-ink-900 hover:bg-tag-notice-orange/20',
 };
 
 const sizes: Record<Size, string> = {

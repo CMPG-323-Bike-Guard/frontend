@@ -84,7 +84,10 @@ export function RegisterBikePage() {
           {error && <Alert tone="alert" className="mb-4">{error}</Alert>}
           <BikeForm
             submitLabel="Submit for approval"
+            submitClassName="cursor-pointer"
             secondaryLabel="Save as draft"
+            secondaryVariant="subtle"
+            cancelVariant="dangerOutline"
             submitting={createBike.isPending}
             onSubmit={(values) => save(values, true)}
             onSecondary={(values) => save(values, false)}

@@ -37,7 +37,7 @@ export function Field({
       </label>
       {children({ id, describedBy, invalid: Boolean(error) })}
       {(error || hint) && (
-        <p id={messageId} className={cx('text-sm', error ? 'text-alert-600' : 'text-ink-500')} role={error ? 'alert' : undefined}>
+        <p id={messageId} className={cx('text-sm', error ? 'text-action-red' : 'text-ink-500')} role={error ? 'alert' : undefined}>
           {error ?? hint}
         </p>
       )}

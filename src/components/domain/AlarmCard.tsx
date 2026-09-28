@@ -63,14 +63,14 @@ export function AlarmCard({
       <header
         className={cx(
           'flex flex-wrap items-center justify-between gap-2 rounded-t-card px-4 py-2.5',
-          live && risk === 'high' ? 'bg-alert-500 text-white' : live ? 'bg-warn-500 text-white' : 'bg-ink-50 text-ink-700',
+          live ? 'border-b border-action-red bg-action-red-tint text-ink-900' : 'bg-ink-50 text-ink-700',
         )}
       >
         <p className="flex items-center gap-2 text-sm font-semibold">
           {live && <Siren className="h-4 w-4" aria-hidden="true" />}
           Gate held · {gateName}
         </p>
-        <p className="text-sm">
+        <p className="text-sm text-ink-500">
           {relativeTime(alarm.raisedAt)} · {formatDateTime(alarm.raisedAt)}
         </p>
       </header>
@@ -192,11 +192,12 @@ export function AlarmCard({
         description="Your name and the time are recorded against this crossing. The original result is not changed."
         footer={
           <>
-            <Button variant="ghost" onClick={() => setDialog(null)}>
+            <Button variant="subtle" className="w-32" onClick={() => setDialog(null)}>
               Cancel
             </Button>
             <Button
-              variant={dialog === 'cleared_in_person' ? 'primary' : 'danger'}
+              variant={dialog === 'cleared_in_person' ? 'primary' : 'dangerOutline'}
+              className="w-32"
               loading={resolving}
               onClick={submit}
             >

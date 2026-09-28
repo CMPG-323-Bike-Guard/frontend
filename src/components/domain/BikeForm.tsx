@@ -25,6 +25,9 @@ export function BikeForm({
   onSecondary,
   submitting,
   onCancel,
+  submitClassName,
+  secondaryVariant = 'secondary',
+  cancelVariant = 'ghost',
   photoRequired = true,
 }: {
   initial?: Partial<BikeFormValues>;
@@ -34,6 +37,9 @@ export function BikeForm({
   onSecondary?(values: BikeFormValues): void;
   submitting?: boolean;
   onCancel?(): void;
+  submitClassName?: string;
+  secondaryVariant?: 'secondary' | 'subtle';
+  cancelVariant?: 'ghost' | 'dangerOutline';
   photoRequired?: boolean;
 }) {
   const [name, setName] = useState(initial?.name ?? '');
@@ -158,16 +164,16 @@ export function BikeForm({
       </Field>
 
       <div className="flex flex-wrap gap-2">
-        <Button type="submit" size="lg" loading={submitting}>
+        <Button type="submit" size="lg" loading={submitting} className={submitClassName}>
           {submitLabel}
         </Button>
         {secondaryLabel && onSecondary && (
-          <Button type="button" variant="secondary" size="lg" onClick={handleSecondary} disabled={submitting}>
+          <Button type="button" variant={secondaryVariant} size="lg" onClick={handleSecondary} disabled={submitting}>
             {secondaryLabel}
           </Button>
         )}
         {onCancel && (
-          <Button type="button" variant="ghost" size="lg" onClick={onCancel} disabled={submitting}>
+          <Button type="button" variant={cancelVariant} size="lg" onClick={onCancel} disabled={submitting}>
             Cancel
           </Button>
         )}

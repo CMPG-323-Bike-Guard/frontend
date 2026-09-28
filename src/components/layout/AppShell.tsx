@@ -3,6 +3,7 @@ import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { LogOut, Menu, X } from 'lucide-react';
 import { useAuth } from '@/auth/AuthContext';
 import { INSTITUTION, ROLE_LABEL } from '@/lib/constants';
+import { useNotifications } from '@/api/queries';
 import { cx } from '@/lib/cx';
 import { Avatar } from '@/components/ui/Avatar';
 import { Brand } from './Brand';
@@ -19,30 +20,54 @@ export function AppShell() {
   const { user, signOut } = useAuth();
   const location = useLocation();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const notifications = useNotifications(user?.role === 'student' ? user.userId : undefined);
 
   useEffect(() => setDrawerOpen(false), [location.pathname]);
 
   if (!user) return null;
   const items = NAVIGATION[user.role];
+  const unreadNotificationCount = user.role === 'student'
+    ? (notifications.data ?? []).filter((notification) => !notification.read).length
+    : 0;
 
   const nav = (
     <nav aria-label="Main" className="flex flex-col gap-0.5">
       {items.map((item) => {
         const Icon = item.icon;
+        const showUnreadCount = item.to === '/notifications' && unreadNotificationCount > 0;
         return (
           <NavLink
             key={item.to}
             to={item.to}
             end={item.end}
+            aria-label={
+              showUnreadCount
+                ? `${item.label}, ${unreadNotificationCount} unread notification${unreadNotificationCount === 1 ? '' : 's'}`
+                : undefined
+            }
             className={({ isActive }) =>
               cx(
                 'flex items-center gap-3 rounded-control px-3 py-2 text-sm font-medium transition-colors',
-                isActive ? 'bg-signal-50 text-signal-700' : 'text-ink-600 hover:bg-ink-50 hover:text-ink-900',
+                isActive ? 'bg-white/15 text-white' : 'text-white/80 hover:bg-white/10 hover:text-white',
               )
             }
           >
-            <Icon className="h-[18px] w-[18px]" aria-hidden="true" />
-            {item.label}
+            {showUnreadCount ? (
+              <>
+                <span className="flex min-w-0 items-center gap-3">
+                  <Icon className="h-[18px] w-[18px] shrink-0" aria-hidden="true" />
+                  <span>{item.label}</span>
+                </span>
+                <span className="ml-auto shrink-0 font-bold text-sidebar-unread">
+                  {unreadNotificationCount > 99 ? '99+' : unreadNotificationCount}
+                </span>
+              </>
+            ) : (
+              <>
+                <Icon className="h-[18px] w-[18px]" aria-hidden="true" />
+                {item.label}
+              </>
+            )}
           </NavLink>
         );
       })}
@@ -72,12 +97,12 @@ export function AppShell() {
           </button>
         </div>
         {drawerOpen && (
-          <div id="mobile-navigation" className="border-t border-ink-100 px-4 py-3">
+          <div id="mobile-navigation" className="border-t border-white/20 bg-brand-purple px-4 py-3">
             {nav}
             <button
               type="button"
               onClick={signOut}
-              className="mt-2 flex w-full items-center gap-3 rounded-control px-3 py-2 text-sm font-medium text-ink-600 hover:bg-ink-50"
+              className="mt-2 flex w-full items-center gap-3 rounded-control px-3 py-2 text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white"
             >
               <LogOut className="h-[18px] w-[18px]" aria-hidden="true" />
               Sign out
@@ -87,26 +112,26 @@ export function AppShell() {
       </header>
 
       <div className="mx-auto flex w-full max-w-[100rem]">
-        <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-ink-100 bg-white px-4 py-5 lg:flex">
+        <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-white/20 bg-brand-purple px-4 py-5 lg:flex">
           <Link to={items[0].to} className="flex flex-col gap-0.5 px-1">
-            <Brand className="text-2xl" />
-            <span className="text-xs text-ink-500">{INSTITUTION}</span>
+            <Brand className="text-2xl [&>span:nth-child(2)]:text-white" invert />
+            <span className="text-xs text-white/80">{INSTITUTION}</span>
           </Link>
 
           <div className="mt-7 flex-1">{nav}</div>
 
-          <div className="border-t border-ink-100 pt-3">
+          <div className="border-t border-white/20 pt-3">
             <div className="flex items-center gap-3 px-1 py-2">
-              <Avatar name={user.name} src={user.photoPath} size="sm" />
+              <Avatar name={user.name} src={user.photoPath} size="sm" className="bg-white/15 text-white" />
               <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-ink-900">{user.name}</p>
-                <p className="truncate text-xs text-ink-500">{ROLE_LABEL[user.role]}</p>
+                <p className="truncate text-sm font-semibold text-white">{user.name}</p>
+                <p className="truncate text-xs text-white/80">{ROLE_LABEL[user.role]}</p>
               </div>
             </div>
             <button
               type="button"
               onClick={signOut}
-              className="mt-1 flex w-full items-center gap-3 rounded-control px-3 py-2 text-sm font-medium text-ink-600 hover:bg-ink-50 hover:text-ink-900"
+              className="mt-1 flex w-full items-center gap-3 rounded-control px-3 py-2 text-sm font-medium text-white/80 hover:bg-white/10 hover:text-white"
             >
               <LogOut className="h-[18px] w-[18px]" aria-hidden="true" />
               Sign out

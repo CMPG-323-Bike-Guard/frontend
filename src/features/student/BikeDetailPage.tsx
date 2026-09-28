@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, ShieldOff, Trash2, UserPlus } from 'lucide-react';
+import { ArrowLeft, ShieldOff, Trash2, UserPlus, VenetianMask } from 'lucide-react';
 import { useCurrentUser } from '@/auth/AuthContext';
 import {
   useBike,
@@ -245,18 +245,23 @@ export function BikeDetailPage() {
         <CardHeader title="Tag and registration" description="Report a problem or take this bike off your profile." />
         <CardBody className="flex flex-wrap gap-2">
           <Button
-            variant="secondary"
+            variant="subtle"
             icon={<ShieldOff className="h-4 w-4" />}
             disabled={!canReportLost}
             onClick={() => setDialog('lost')}
           >
             Report the tag lost
           </Button>
-          <Button variant="secondary" disabled={!canReportLost} onClick={() => setDialog('stolen')}>
+          <Button
+            variant="subtle"
+            icon={<VenetianMask className="h-4 w-4" />}
+            disabled={!canReportLost}
+            onClick={() => setDialog('stolen')}
+          >
             Report the bike stolen
           </Button>
           {bike.status !== 'removed' && (
-            <Button variant="ghost" icon={<Trash2 className="h-4 w-4" />} onClick={() => setDialog('remove')}>
+            <Button variant="dangerOutline" icon={<Trash2 className="h-4 w-4" />} onClick={() => setDialog('remove')}>
               Remove this bike
             </Button>
           )}
@@ -275,11 +280,12 @@ export function BikeDetailPage() {
         }
         footer={
           <>
-            <Button variant="ghost" onClick={() => setDialog(null)}>
+            <Button variant="subtle" className="w-32" onClick={() => setDialog(null)}>
               Cancel
             </Button>
             <Button
-              variant="danger"
+              variant="dangerOutline"
+              className="w-32"
               loading={reportLost.isPending}
               onClick={() =>
                 run(
@@ -299,8 +305,18 @@ export function BikeDetailPage() {
         }
       >
         <p className="text-sm text-ink-700">
-          Tag {tag?.tagRef} on “{bike.name}” will be flagged. Go to Protection Services with your student card for a
-          replacement tag — your registration and its history stay exactly as they are.
+          {dialog === 'stolen' ? (
+            <>
+              Tag {tag?.tagRef} on “{bike.name}” will be flagged as stolen. It stops opening the gate, and guards are
+              alerted if anyone presents it. Please also report the theft to Protection Services and the police. Your
+              registration and its history stay exactly as they are.
+            </>
+          ) : (
+            <>
+              Tag {tag?.tagRef} on “{bike.name}” will be flagged. Go to Protection Services with your student card for a
+              replacement tag — your registration and its history stay exactly as they are.
+            </>
+          )}
         </p>
       </Modal>
 
@@ -312,11 +328,12 @@ export function BikeDetailPage() {
         description="Use this if you have sold the bike or no longer bring it onto campus."
         footer={
           <>
-            <Button variant="ghost" onClick={() => setDialog(null)}>
+            <Button variant="subtle" className="w-32" onClick={() => setDialog(null)}>
               Keep it
             </Button>
             <Button
-              variant="danger"
+              variant="dangerOutline"
+              className="w-32"
               loading={removeBike.isPending}
               onClick={async () => {
                 await run(
@@ -345,7 +362,7 @@ export function BikeDetailPage() {
         description="They can then take this bike through the gate using their own card."
         footer={
           <>
-            <Button variant="ghost" onClick={() => setDialog(null)}>
+            <Button variant="subtle" className="w-32" onClick={() => setDialog(null)}>
               Cancel
             </Button>
             <Button loading={grant.isPending} onClick={handleShare}>

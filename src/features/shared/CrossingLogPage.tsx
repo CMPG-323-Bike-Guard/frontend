@@ -16,6 +16,13 @@ import { SkeletonRows } from '@/components/ui/Spinner';
 import { Tabs } from '@/components/ui/Tabs';
 import { CrossingTable } from '@/components/domain/CrossingTable';
 
+function localDateValue() {
+  const date = new Date();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${date.getFullYear()}-${month}-${day}`;
+}
+
 /**
  * FR-ADM-05: search the crossing log by student, bike, time range and gate.
  *
@@ -23,7 +30,13 @@ import { CrossingTable } from '@/components/domain/CrossingTable';
  * investigation, so the filters mirror the questions actually asked: who, what
  * bike, which gate, when.
  */
-export function CrossingLogPage({ canExport = false }: { canExport?: boolean }) {
+export function CrossingLogPage({
+  canExport = false,
+  preventFutureDates = false,
+}: {
+  canExport?: boolean;
+  preventFutureDates?: boolean;
+}) {
   const gates = useGates();
 
   const [query, setQuery] = useState('');
@@ -31,17 +44,36 @@ export function CrossingLogPage({ canExport = false }: { canExport?: boolean }) 
   const [result, setResult] = useState<CrossingResult | 'all'>('all');
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
+  const [, setDateRefresh] = useState(0);
+  const today = localDateValue();
+
+  function refreshDateLimit() {
+    if (preventFutureDates) setDateRefresh((current) => current + 1);
+  }
+
+  const fromError = preventFutureDates
+    ? from > today
+      ? 'Choose today or an earlier date.'
+      : from && to && from > to
+        ? 'The start date must be before the end date.'
+        : undefined
+    : undefined;
+  const toError = preventFutureDates && to > today ? 'Choose today or an earlier date.' : undefined;
+  const validFrom = from && !fromError ? from : undefined;
+  const validTo = to && !toError ? to : undefined;
+  const fromMax = preventFutureDates ? (to && to < today ? to : today) : to || undefined;
+  const toMin = preventFutureDates ? (from && from <= today ? from : undefined) : from || undefined;
 
   const filters = useMemo<CrossingFilters>(
     () => ({
       query: query.trim() || undefined,
       gateId: gateId || undefined,
       result: result === 'all' ? undefined : result,
-      from: from || undefined,
-      to: to || undefined,
+      from: validFrom,
+      to: validTo,
       limit: 200,
     }),
-    [query, gateId, result, from, to],
+    [query, gateId, result, validFrom, validTo],
   );
 
   const crossings = useCrossings(filters);
@@ -131,25 +163,36 @@ export function CrossingLogPage({ canExport = false }: { canExport?: boolean }) 
               )}
             </Field>
 
-            <Field label="From">
-              {({ id }) => (
+            <Field label="From" error={fromError}>
+              {({ id, describedBy, invalid }) => (
                 <Input
                   id={id}
                   type="date"
                   value={from}
-                  max={to || undefined}
+                  aria-describedby={describedBy}
+                  invalid={invalid}
+                  max={fromMax}
+                  onFocus={refreshDateLimit}
+                  onPointerDown={refreshDateLimit}
+                  onKeyDown={refreshDateLimit}
                   onChange={(event) => setFrom(event.target.value)}
                 />
               )}
             </Field>
 
-            <Field label="To">
-              {({ id }) => (
+            <Field label="To" error={toError}>
+              {({ id, describedBy, invalid }) => (
                 <Input
                   id={id}
                   type="date"
                   value={to}
-                  min={from || undefined}
+                  aria-describedby={describedBy}
+                  invalid={invalid}
+                  min={toMin}
+                  max={preventFutureDates ? today : undefined}
+                  onFocus={refreshDateLimit}
+                  onPointerDown={refreshDateLimit}
+                  onKeyDown={refreshDateLimit}
                   onChange={(event) => setTo(event.target.value)}
                 />
               )}
