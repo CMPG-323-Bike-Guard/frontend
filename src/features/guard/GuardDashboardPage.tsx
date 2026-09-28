@@ -244,7 +244,7 @@ export function GuardDashboardPage() {
                 }
               />
             ) : (
-              <ul className="divide-y divide-ink-50">
+              <ul className="divide-y divide-ink-100">
                 {visibleFeed.map((row) => (
                   <li key={row.event.eventId} className="flex items-center gap-3 py-2.5">
                     <span className="w-16 shrink-0 text-sm text-ink-500">{formatTime(row.event.timestamp)}</span>
@@ -289,7 +289,7 @@ function ClosedAlarms() {
   }
 
   return (
-    <ul className="divide-y divide-ink-50">
+    <ul className="divide-y divide-ink-100">
       {closed.map((view) => (
         <li key={view.alarm.alarmId} className="py-3">
           <div className="flex flex-wrap items-center justify-between gap-2">

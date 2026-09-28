@@ -31,7 +31,7 @@ export function Th({ children, className, align = 'left' }: { children: ReactNod
 
 export function Td({ children, className, align = 'left' }: { children: ReactNode; className?: string; align?: 'left' | 'right' }) {
   return (
-    <td className={cx('border-b border-ink-50 py-2.5 pr-4 align-middle', align === 'right' ? 'text-right' : 'text-left', className)}>
+    <td className={cx('border-b border-ink-100 py-2.5 pr-4 align-middle', align === 'right' ? 'text-right' : 'text-left', className)}>
       {children}
     </td>
   );

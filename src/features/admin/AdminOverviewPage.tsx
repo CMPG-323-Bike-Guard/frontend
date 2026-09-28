@@ -84,7 +84,7 @@ export function AdminOverviewPage() {
               <EmptyState title="The queue is clear" description="Every submitted registration has been reviewed." />
             )}
             {pending.isSuccess && pending.data.length > 0 && (
-              <ul className="divide-y divide-ink-50">
+              <ul className="divide-y divide-ink-100">
                 {pending.data.slice(0, 5).map((view) => (
                   <li key={view.bike.bikeId} className="flex items-center justify-between gap-3 py-3">
                     <div className="min-w-0">
@@ -115,7 +115,7 @@ export function AdminOverviewPage() {
               <EmptyState title="Nothing to hand over" description="Every issued tag has been collected." />
             )}
             {awaitingCollection.isSuccess && awaitingCollection.data.length > 0 && (
-              <ul className="divide-y divide-ink-50">
+              <ul className="divide-y divide-ink-100">
                 {awaitingCollection.data.slice(0, 5).map((view) => (
                   <li key={view.bike.bikeId} className="flex items-center justify-between gap-3 py-3">
                     <div className="min-w-0">
@@ -144,7 +144,7 @@ export function AdminOverviewPage() {
         <CardBody className="py-0">
           {audit.isLoading && <SkeletonRows rows={4} className="py-4" />}
           {audit.isSuccess && (
-            <ul className="divide-y divide-ink-50">
+            <ul className="divide-y divide-ink-100">
               {audit.data.slice(0, 6).map((entry) => (
                 <li key={entry.auditId} className="py-3">
                   <div className="flex flex-wrap items-baseline justify-between gap-2">

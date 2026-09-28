@@ -82,7 +82,7 @@ export function ManualChecksPage() {
           {gates.isLoading ? (
             <SkeletonRows rows={2} className="py-4" />
           ) : (
-            <ul className="divide-y divide-ink-50">
+            <ul className="divide-y divide-ink-100">
               {(gates.data ?? []).map((gate) => (
                 <li key={gate.gateId} className="flex flex-wrap items-center justify-between gap-3 py-3">
                   <div>
@@ -227,7 +227,7 @@ export function ManualChecksPage() {
               />
             )}
             {manualLog.isSuccess && manualLog.data.length > 0 && (
-              <ul className="divide-y divide-ink-50">
+              <ul className="divide-y divide-ink-100">
                 {manualLog.data.map((row) => (
                   <li key={row.event.eventId} className="py-3">
                     <div className="flex flex-wrap items-center justify-between gap-2">

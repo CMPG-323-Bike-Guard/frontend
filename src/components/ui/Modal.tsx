@@ -76,7 +76,7 @@ export function Modal({
         aria-modal="true"
         aria-label={title}
         className={cx(
-          'relative w-full rounded-t-card bg-white shadow-overlay sm:rounded-card',
+          'relative w-full rounded-t-card border border-ink-100 bg-white shadow-overlay sm:rounded-card',
           size === 'lg' ? 'sm:max-w-2xl' : 'sm:max-w-lg',
         )}
       >

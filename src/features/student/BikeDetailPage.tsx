@@ -213,7 +213,7 @@ export function BikeDetailPage() {
               description="If you lend it to someone, authorise them here so the gate does not raise an alarm."
             />
           ) : (
-            <ul className="divide-y divide-ink-50">
+            <ul className="divide-y divide-ink-100">
               {activePermissions.map((permission) => (
                 <li key={permission.permissionId} className="flex items-center justify-between gap-3 py-3">
                   <div>
