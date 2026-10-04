@@ -26,14 +26,20 @@ export function Modal({
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
 
+    const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
   useEffect(() => {
     if (!open) return;
     const previous = document.activeElement as HTMLElement | null;
-    panelRef.current?.querySelector<HTMLElement>('input, select, textarea, button')?.focus();
+    const target =
+      panelRef.current?.querySelector<HTMLElement>('input, select, textarea') ??
+      panelRef.current?.querySelector<HTMLElement>('button');
+    target?.focus();
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        onClose();
+        onCloseRef.current();
         return;
       }
       if (event.key !== 'Tab' || !panelRef.current) return;
@@ -59,7 +65,7 @@ export function Modal({
       document.body.style.overflow = '';
       previous?.focus();
     };
-  }, [open, onClose]);
+    }, [open]);
 
   if (!open) return null;
 
