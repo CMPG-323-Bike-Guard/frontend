@@ -51,6 +51,14 @@ export type AlarmStatus = 'open' | 'escalated' | 'cleared_in_person' | 'reported
 
 export type CrossingSource = 'automated' | 'manual_entry' | 'guard_override';
 
+export interface NewPerson {
+  studentStaffNumber: string;
+  name: string;
+  email: string;
+  role: Role;
+  password: string;
+}
+
 export interface User {
   userId: string;
   studentStaffNumber: string;

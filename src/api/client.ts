@@ -3,11 +3,11 @@ import type {
   AlarmView,
   BikeStatus,
   BikeView,
-  Card,
   CrossingView,
   DashboardStats,
   Gate,
   GateMode,
+  NewPerson,
   Notification,
   ReportBundle,
   Session,
@@ -153,8 +153,8 @@ const liveApi = {
     request<User[]>(`${endpoints.users.list}${query({ role })}`),
   findUserByNumber: (studentNumber: string) =>
     request<User | null>(endpoints.users.byNumber(studentNumber)),
-  enrolCard: (studentNumber: string, cardUid: string, replaceExisting: boolean, _adminUserId: string) =>
-    post<Card>(endpoints.cards.enrol, { studentNumber, cardUid, replaceExisting }),
+  createUser: (person: NewPerson, _adminUserId: string) => 
+    post<User>(endpoints.users.create, person),
   listAudit: (limit = 40) =>
     request<Array<{ auditId: string; actorName: string; action: string; entityType: string; entityId: string; timestamp: string; detail: string }>>(
       `${endpoints.reporting.audit}${query({ limit })}`,

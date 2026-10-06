@@ -11,6 +11,7 @@ import type {
   GateEvent,
   GateMode,
   MismatchReason,
+  NewPerson,
   Notification,
   PermissionView,
   ReportBundle,
@@ -19,7 +20,6 @@ import type {
   SeriesPoint,
   Session,
   User,
-  Card,
 } from '@/types';
 import { buildSeed, type SeedData } from './seed';
 import { bikePhotoFor } from './media';
@@ -761,34 +761,30 @@ export const mockApi = {
     return db.users.find((user) => user.studentStaffNumber === studentNumber.trim()) ?? null;
   },
 
-    async enrolCard(studentNumber: string, cardUid: string, replaceExisting: boolean, adminUserId: string): Promise<Card> {
+
+    async createUser(person: NewPerson, adminUserId: string): Promise<User> {
     await latency();
-    const user = db.users.find((item) => item.studentStaffNumber === studentNumber.trim());
-    if (!user) throw new MockApiError('invalid', 'No student or staff member matches that number.', 'studentNumber');
-
-    const cardRef = `CRD-${cardUid.trim().toUpperCase().replace(/[^A-Z0-9]/g, '').slice(-6).padStart(6, '0')}`;
-    if (db.cards.some((item) => item.cardRef === cardRef)) {
-      throw new MockApiError('conflict', 'That card is already enrolled.', 'cardUid');
+    const number = person.studentStaffNumber.trim();
+    const email = person.email.trim().toLowerCase();
+    if (db.users.some((item) => item.studentStaffNumber === number)) {
+      throw new MockApiError('conflict', 'Someone with that student or staff number already exists.', 'studentStaffNumber');
+    }
+    if (db.users.some((item) => item.email.toLowerCase() === email)) {
+      throw new MockApiError('conflict', 'That email address is already in use.', 'email');
     }
 
-    const current = db.cards.find((item) => item.userId === user.userId && item.status === 'active');
-    if (current && !replaceExisting) {
-      throw new MockApiError('conflict', 'This person already has an active card. Confirm to replace it.', 'studentNumber');
-    }
-    if (current) current.status = 'blocked';
-
-    const card: Card = { cardId: newId('c'), userId: user.userId, cardRef, status: 'active' };
-    db.cards.push(card);
-    record(
-      adminUserId,
-      current ? 'card.replaced' : 'card.enrolled',
-      'card',
-      card.cardId,
-      current
-        ? `Card ${cardRef} enrolled for ${user.name}, replacing ${current.cardRef}.`
-        : `Card ${cardRef} enrolled for ${user.name}.`,
-    );
-    return card;
+    const user: User = {
+      userId: newId('u'),
+      studentStaffNumber: number,
+      name: person.name.trim(),
+      role: person.role,
+      email,
+      photoPath: null,
+      accountStatus: 'active',
+    };
+    db.users.push(user);
+    record(adminUserId, 'user.created', 'user', user.userId, `${user.name} (${user.role}) was added with number ${number}.`);
+    return user;
   },
 
   async listAudit(limit = 40) {

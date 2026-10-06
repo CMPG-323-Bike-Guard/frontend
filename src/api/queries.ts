@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { AlarmStatus, BikeStatus, GateMode, Notification } from '@/types';
+import type { AlarmStatus, BikeStatus, GateMode, NewPerson, Notification } from '@/types';
 import { api, type BikeInput, type CrossingFilters } from './client';
 
 /** Query keys are namespaced so a mutation can invalidate exactly what changed. */
@@ -211,11 +211,10 @@ export function useReplaceTag() {
   });
 }
 
-export function useEnrolCard() {
+export function useCreateUser() {
   const refresh = useRefresh();
   return useMutation({
-    mutationFn: (vars: { studentNumber: string; cardUid: string; replaceExisting: boolean; adminUserId: string }) =>
-      api.enrolCard(vars.studentNumber, vars.cardUid, vars.replaceExisting, vars.adminUserId),
+    mutationFn: (vars: { person: NewPerson; adminUserId: string }) => api.createUser(vars.person, vars.adminUserId),
     onSuccess: refresh,
   });
 }

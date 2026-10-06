@@ -56,12 +56,10 @@ export const endpoints = {
   },
   users: {
     list: '/users',
+    create: '/users',
     byNumber: (studentNumber: string) => `/users/lookup/${studentNumber}`,
     notifications: (userId: string) => `/users/${userId}/notifications`,
     notification: (notificationId: string) => `/notifications/${notificationId}`,
-  },
-  cards: {
-    enrol: '/cards',
   },
   reporting: {
     stats: '/reports/stats',
