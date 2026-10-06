@@ -3,6 +3,7 @@ import type {
   AlarmView,
   BikeStatus,
   BikeView,
+  Card,
   CrossingView,
   DashboardStats,
   Gate,
@@ -152,6 +153,8 @@ const liveApi = {
     request<User[]>(`${endpoints.users.list}${query({ role })}`),
   findUserByNumber: (studentNumber: string) =>
     request<User | null>(endpoints.users.byNumber(studentNumber)),
+  enrolCard: (studentNumber: string, cardUid: string, replaceExisting: boolean, _adminUserId: string) =>
+    post<Card>(endpoints.cards.enrol, { studentNumber, cardUid, replaceExisting }),
   listAudit: (limit = 40) =>
     request<Array<{ auditId: string; actorName: string; action: string; entityType: string; entityId: string; timestamp: string; detail: string }>>(
       `${endpoints.reporting.audit}${query({ limit })}`,
@@ -186,4 +189,14 @@ export const demo = {
   simulateCrossing: mockApi.simulateCrossing.bind(mockApi),
   simulateOutage: mockApi.simulateOutage.bind(mockApi),
   reset: mockApi.reset.bind(mockApi),
+};
+
+/** Dev-only reader emulator. Talks to the backend's /dev/simulate-crossing route. */
+export const devTools = {
+  enabled: API_MODE === 'live' && import.meta.env.DEV,
+  scan: (gateId: string, cardUid: string | null, tagUid: string | null) =>
+    post<{ crossing: CrossingView; gateShouldOpen: boolean; alarmRaised: boolean }>(
+      endpoints.dev.simulateCrossing,
+      { gateId, cardUid, tagUid },
+    ),
 };

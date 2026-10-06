@@ -21,6 +21,7 @@ import { ConnectionIndicator } from '@/components/domain/ConnectionIndicator';
 import { GateBoard } from '@/components/domain/GateBoard';
 import { ResultBadge } from '@/components/domain/StatusBadges';
 import { GateSimulator } from './GateSimulator';
+import { ReaderEmulator } from './ReaderEmulator';
 
 /**
  * Guard dashboard — UC-02, UC-03 and FR-SEC-01 to FR-SEC-06.
@@ -271,6 +272,7 @@ export function GuardDashboardPage() {
       </Card>
 
       <GateSimulator gates={gates.data ?? []} />
+      <ReaderEmulator gates={gates.data ?? []} />
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Search } from 'lucide-react';
+import { CreditCard, Search } from 'lucide-react';
 import type { Role } from '@/types';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/api/client';
@@ -8,6 +8,7 @@ import { ROLE_LABEL } from '@/lib/constants';
 import { Alert } from '@/components/ui/Alert';
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
 import { Card, CardBody, CardHeader } from '@/components/ui/Card';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Field } from '@/components/ui/Field';
@@ -16,18 +17,19 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { SkeletonRows } from '@/components/ui/Spinner';
 import { TableWrap, Td, Th } from '@/components/ui/Table';
 import { Tabs } from '@/components/ui/Tabs';
+import { EnrolCardModal } from './EnrolCardModal';
+
 
 /**
- * Read-only directory.
- *
- * BikeGuard reads the existing NWU card system and does not issue or replace
- * cards (Functional Specification, Out of Scope), so accounts cannot be
- * created or edited here- this screen only helps an administrator find the
- * right person during an investigation or at the service point.
+ * BikeGuard does not issue physical cards or create accounts. An administrator
+ * can enrol an existing card's UID against a person so the gate recognises
+ * it, and otherwise uses this screen to find the right person during an
+ * investigation or at the service point.
  */
 export function PeoplePage() {
   const [role, setRole] = useState<Role | 'all'>('all');
   const [query, setQuery] = useState('');
+  const [enrolling, setEnrolling] = useState(false);
 
   const users = useQuery({ queryKey: keys.users('all'), queryFn: () => api.listUsers() });
   const registrations = useRegistrations();
@@ -53,7 +55,12 @@ export function PeoplePage() {
     <div className="flex flex-col gap-6">
       <PageHeader
         title="People"
-        description="Everyone with a BikeGuard account. Cards come from the existing NWU card system and are not issued here."
+        description="Everyone with a BikeGuard account. Cards are issued by the NWU card system; enrol a card's UID here so gates can recognise it."
+        actions={
+          <Button icon={<CreditCard className="h-4 w-4" aria-hidden="true" />} onClick={() => setEnrolling(true)}>
+            Enrol a card
+          </Button>
+        }
       />
 
       <Card>
@@ -130,6 +137,7 @@ export function PeoplePage() {
             ))}
         </CardBody>
       </Card>
+      <EnrolCardModal open={enrolling} onClose={() => setEnrolling(false)} />
     </div>
   );
 }

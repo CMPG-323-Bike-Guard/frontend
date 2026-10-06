@@ -43,6 +43,9 @@ export const endpoints = {
     list: '/gates',
     mode: (gateId: string) => `/gates/${gateId}/mode`,
   },
+  dev: {
+    simulateCrossing: '/dev/simulate-crossing',
+  },
   crossings: {
     list: '/crossings',
     manual: '/crossings/manual',
@@ -56,6 +59,9 @@ export const endpoints = {
     byNumber: (studentNumber: string) => `/users/lookup/${studentNumber}`,
     notifications: (userId: string) => `/users/${userId}/notifications`,
     notification: (notificationId: string) => `/notifications/${notificationId}`,
+  },
+  cards: {
+    enrol: '/cards',
   },
   reporting: {
     stats: '/reports/stats',

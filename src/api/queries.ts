@@ -211,6 +211,15 @@ export function useReplaceTag() {
   });
 }
 
+export function useEnrolCard() {
+  const refresh = useRefresh();
+  return useMutation({
+    mutationFn: (vars: { studentNumber: string; cardUid: string; replaceExisting: boolean; adminUserId: string }) =>
+      api.enrolCard(vars.studentNumber, vars.cardUid, vars.replaceExisting, vars.adminUserId),
+    onSuccess: refresh,
+  });
+}
+
 export function useMarkNotificationRead() {
   const client = useQueryClient();
   const notificationQueries = { queryKey: ['notifications'] as const };
