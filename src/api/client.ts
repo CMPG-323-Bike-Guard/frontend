@@ -194,9 +194,9 @@ export const demo = {
 /** Dev-only reader emulator. Talks to the backend's /dev/simulate-crossing route. */
 export const devTools = {
   enabled: API_MODE === 'live' && import.meta.env.DEV,
-  scan: (gateId: string, cardUid: string | null, tagUid: string | null) =>
+  scan: (gateId: string, studentNumber: string | null, tagUid: string | null) =>
     post<{ crossing: CrossingView; gateShouldOpen: boolean; alarmRaised: boolean }>(
       endpoints.dev.simulateCrossing,
-      { gateId, cardUid, tagUid },
+      { gateId, studentNumber, tagUid },
     ),
 };

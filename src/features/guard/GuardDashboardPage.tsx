@@ -246,7 +246,7 @@ export function GuardDashboardPage() {
                   <li key={row.event.eventId} className="flex items-center gap-3 py-2.5">
                     <span className="w-16 shrink-0 text-sm text-ink-500">{formatTime(row.event.timestamp)}</span>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-ink-900">{row.userName ?? 'Unidentified card'}</p>
+                      <p className="truncate text-sm font-medium text-ink-900">{row.userName ?? 'Unidentified person'}</p>
                       <p className="truncate text-xs text-ink-500">
                         {row.gateName} · {row.bikeName ?? row.event.note ?? 'no bike matched'}
                       </p>
@@ -292,7 +292,7 @@ function ClosedAlarms() {
         <li key={view.alarm.alarmId} className="py-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="text-sm font-medium text-ink-900">
-              {view.presentedUser?.name ?? 'Unidentified card'} · {view.gateName}
+              {view.presentedUser?.name ?? 'Unidentified person'} · {view.gateName}
             </p>
             <p className="text-sm text-ink-500">{relativeTime(view.alarm.resolvedAt ?? view.alarm.raisedAt)}</p>
           </div>

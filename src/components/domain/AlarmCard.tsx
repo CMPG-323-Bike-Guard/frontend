@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ArrowUpRight, ShieldCheck, Siren } from 'lucide-react';
 import type { AlarmView } from '@/types';
 import { MISMATCH_REASON_META } from '@/lib/constants';
-import { formatDateTime, relativeTime, shortRef } from '@/lib/format';
+import { formatDateTime, relativeTime } from '@/lib/format';
 import { cx } from '@/lib/cx';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
@@ -87,7 +87,6 @@ export function AlarmCard({
                 <div className="min-w-0">
                   <p className="truncate font-semibold text-ink-900">{presentedUser.name}</p>
                   <p className="text-sm text-ink-600">{presentedUser.studentStaffNumber}</p>
-                  <p className="text-sm text-ink-500">Card {shortRef(event.cardRef)}</p>
                 </div>
               </div>
             ) : (

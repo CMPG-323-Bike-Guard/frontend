@@ -69,17 +69,6 @@ export interface User {
   accountStatus: AccountStatus;
 }
 
-/**
- * Card identifiers are never held in plain text (Technical Specification 3.1,
- * 7.3.4). The frontend only ever receives a short non-reversible reference.
- */
-export interface Card {
-  cardId: string;
-  userId: string;
-  cardRef: string;
-  status: 'active' | 'blocked';
-}
-
 export interface Bike {
   bikeId: string;
   ownerUserId: string;
@@ -119,7 +108,7 @@ export interface GateEvent {
   gateId: string;
   userId: string | null;
   bikeId: string | null;
-  cardRef: string | null;
+  studentNumber: string | null;
   tagRef: string | null;
   result: CrossingResult;
   mismatchReason: MismatchReason | null;

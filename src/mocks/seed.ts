@@ -3,7 +3,6 @@ import type {
   AuditAction,
   Bike,
   BikePermission,
-  Card,
   Gate,
   GateEvent,
   MismatchReason,
@@ -96,14 +95,6 @@ export function buildSeed() {
     },
     
   ];
-
-  const cards: Card[] = users.map((user, index) => ({
-    cardId: `c-${index + 1}`,
-    userId: user.userId,
-    // Card numbers are stored hashed; the UI only ever sees this reference.
-    cardRef: `CRD-${(user.studentStaffNumber.split('').reverse().join('') + '0000').slice(0, 6)}`,
-    status: 'active',
-  }));
 
   const bikeSpecs: Array<{
     id: string;
@@ -209,7 +200,7 @@ export function buildSeed() {
   const alarms: Alarm[] = [];
   const activeBikes = bikes.filter((bike) => bike.status === 'active');
   const tagByBike = new Map(tags.map((tag) => [tag.bikeId, tag]));
-  const cardByUser = new Map(cards.map((card) => [card.userId, card]));
+  const numberByUser = new Map(users.map((user) => [user.userId, user.studentStaffNumber]));
 
   let sequence = 0;
   const nextId = (prefix: string) => `${prefix}-${(++sequence).toString().padStart(5, '0')}`;
@@ -236,7 +227,6 @@ export function buildSeed() {
 
       const bike = activeBikes[Math.floor(random() * activeBikes.length)];
       const tag = tagByBike.get(bike.bikeId) ?? null;
-      const card = cardByUser.get(bike.ownerUserId) ?? null;
       const gateId = random() > 0.45 ? 'g-1' : 'g-2';
       const roll = random();
       const isMismatch = roll > 0.94;
@@ -248,7 +238,7 @@ export function buildSeed() {
         gateId,
         userId: bike.ownerUserId,
         bikeId: isMismatch ? null : bike.bikeId,
-        cardRef: card?.cardRef ?? null,
+        studentNumber: numberByUser.get(bike.ownerUserId) ?? null,
         tagRef: tag?.tagRef ?? null,
         result: isMismatch ? 'mismatch' : isManual ? 'manual' : 'match',
         mismatchReason: isMismatch ? mismatchReasons[Math.floor(random() * mismatchReasons.length)] : null,
@@ -293,14 +283,13 @@ export function buildSeed() {
   ];
 
   openAlarmSpecs.forEach((spec) => {
-    const card = cardByUser.get(spec.userId) ?? null;
     const event: GateEvent = {
       eventId: nextId('e'),
       timestamp: iso(spec.minutesAgo * 60_000),
       gateId: spec.gateId,
       userId: spec.userId,
       bikeId: null,
-      cardRef: card?.cardRef ?? null,
+      studentNumber: numberByUser.get(spec.userId) ?? null,
       tagRef: spec.tagRef,
       result: 'mismatch',
       mismatchReason: spec.reason,
@@ -394,7 +383,7 @@ export function buildSeed() {
     },
   ];
 
-  return { users, cards, bikes, tags, gates, events, alarms, permissions, notifications, audit };
+  return { users, bikes, tags, gates, events, alarms, permissions, notifications, audit };
 }
 
 export type SeedData = ReturnType<typeof buildSeed>;

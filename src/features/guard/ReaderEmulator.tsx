@@ -11,11 +11,11 @@ import { Input, Select } from '@/components/ui/Input';
 import { useToast } from '@/components/ui/Toast';
 
 const PRESETS = [
-  { label: 'Thabo + his own bike', card: 'CARD-RAW-0001', tag: 'TAG-RAW-0001', expect: 'match' },
-  { label: "Lerato's card + Thabo's bike", card: 'CARD-RAW-0002', tag: 'TAG-RAW-0001', expect: 'tag_registered_to_other_user' },
-  { label: 'Unknown tag', card: 'CARD-RAW-0001', tag: 'TAG-NOPE', expect: 'tag_not_registered' },
-  { label: 'Card only (no tag)', card: 'CARD-RAW-0001', tag: '', expect: 'incomplete_read' },
-  { label: 'Tag only (no card)', card: '', tag: 'TAG-RAW-0001', expect: 'incomplete_read' },
+  { label: 'Thabo + his own bike', student: '30112233', tag: 'TAG-RAW-0001', expect: 'match' },
+  { label: "Lerato's card + Thabo's bike", student: '30112244', tag: 'TAG-RAW-0001', expect: 'tag_registered_to_other_user' },
+  { label: 'Unknown tag', student: '30112233', tag: 'TAG-NOPE', expect: 'tag_not_registered' },
+  { label: 'Card only (no tag)', student: '30112233', tag: '', expect: 'incomplete_read' },
+  { label: 'Tag only (no card)', student: '', tag: 'TAG-RAW-0001', expect: 'incomplete_read' },
 ];
 
 interface Outcome {
@@ -30,7 +30,7 @@ export function ReaderEmulator({ gates }: { gates: Gate[] }) {
   const user = useCurrentUser();
   const toast = useToast();
   const [gateId, setGateId] = useState('');
-  const [card, setCard] = useState(PRESETS[0].card);
+  const [studentNumber, setStudentNumber] = useState(PRESETS[0].student);
   const [tag, setTag] = useState(PRESETS[0].tag);
   const [busy, setBusy] = useState(false);
   const [outcome, setOutcome] = useState<Outcome | null>(null);
@@ -43,7 +43,7 @@ export function ReaderEmulator({ gates }: { gates: Gate[] }) {
   async function tap() {
     setBusy(true);
     try {
-      const res = await devTools.scan(activeId, card.trim() || null, tag.trim() || null);
+        const res = await devTools.scan(activeId, studentNumber.trim() || null, tag.trim() || null);
       setOutcome({
         result: res.crossing.event.result,
         reason: res.crossing.event.mismatchReason,
@@ -100,7 +100,7 @@ export function ReaderEmulator({ gates }: { gates: Gate[] }) {
               key={preset.label}
               variant="subtle"
               onClick={() => {
-                setCard(preset.card);
+                setStudentNumber(preset.student);
                 setTag(preset.tag);
               }}
             >
@@ -110,8 +110,10 @@ export function ReaderEmulator({ gates }: { gates: Gate[] }) {
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field label="Card UID (blank = no card read)">
-            {({ id }) => <Input id={id} value={card} onChange={(event) => setCard(event.target.value)} />}
+          <Field label="Student number read from the card (blank = no card read)">
+            {({ id }) => (
+              <Input id={id} inputMode="numeric" value={studentNumber} onChange={(event) => setStudentNumber(event.target.value)} />
+            )}
           </Field>
           <Field label="Tag UID (blank = no tag read)">
             {({ id }) => <Input id={id} value={tag} onChange={(event) => setTag(event.target.value)} />}

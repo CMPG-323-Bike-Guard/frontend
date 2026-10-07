@@ -83,10 +83,10 @@ export function CrossingLogPage({
     const rows = (crossings.data ?? []).map((row) => ({
       timestamp: formatDateTime(row.event.timestamp),
       gate: row.gateName,
-      person: row.userName ?? 'Unidentified card',
+      person: row.userName ?? 'Unidentified person',
       student_staff_number: row.studentStaffNumber ?? '',
       bike: row.bikeName ?? '',
-      card_ref: row.event.cardRef ?? '',
+      student_number: row.event.studentNumber ?? '',
       tag_ref: row.event.tagRef ?? '',
       result: row.event.result,
       reason: row.event.mismatchReason ? MISMATCH_REASON_META[row.event.mismatchReason].label : '',

@@ -248,7 +248,7 @@ function buildReports(days: number): ReportBundle {
         repeats.get(key) ??
         ({
           userId: user?.userId ?? null,
-          name: user?.name ?? 'Unidentified card',
+          name: user?.name ?? 'Unidentified person',
           studentStaffNumber: user?.studentStaffNumber ?? '—',
           count: 0,
           lastSeen: event.timestamp,
@@ -357,15 +357,7 @@ export const mockApi = {
     const owner = userById(ownerUserId);
     if (!owner) throw new MockApiError('not_found', 'No student matches that number.', 'studentNumber');
 
-    // UC-01 error flow: a card that cannot be validated against the NWU card
-    // system blocks the registration until IT resolves it.
-    const card = db.cards.find((entry) => entry.userId === ownerUserId);
-    if (!card || card.status !== 'active') {
-      throw new MockApiError(
-        'card_not_validated',
-        'This card could not be validated against the NWU card system. The IT Department needs to resolve it before a bike can be registered.',
-      );
-    }
+  
 
     const bike: Bike = {
       bikeId: newId('b'),
@@ -574,7 +566,7 @@ export const mockApi = {
       gateId: gate.gateId,
       userId: user?.userId ?? null,
       bikeId: null,
-      cardRef: null,
+      studentNumber: user?.studentStaffNumber ?? null,
       tagRef: null,
       result: 'manual',
       mismatchReason: null,
@@ -613,7 +605,7 @@ export const mockApi = {
             bike?.name,
             bike?.makeModel,
             event.tagRef,
-            event.cardRef,
+            event.studentNumber,
           ]
             .filter(Boolean)
             .join(' ')
@@ -832,7 +824,7 @@ export const mockApi = {
     const bike = activeBikes[Math.floor(Math.random() * activeBikes.length)];
     const owner = userById(bike.ownerUserId)!;
     const tag = tagForBike(bike.bikeId);
-    const card = db.cards.find((item) => item.userId === owner.userId) ?? null;
+    
 
     let presentedUser = owner;
     let tagRef = tag?.tagRef ?? null;
@@ -854,7 +846,7 @@ export const mockApi = {
       reason = 'incomplete_read';
     }
 
-    const presentedCard = db.cards.find((item) => item.userId === presentedUser.userId) ?? card;
+    
     const isMatch = reason === null;
 
     const event: GateEvent = {
@@ -863,7 +855,7 @@ export const mockApi = {
       gateId: gate.gateId,
       userId: presentedUser.userId,
       bikeId: isMatch ? bike.bikeId : null,
-      cardRef: presentedCard?.cardRef ?? null,
+      studentNumber: presentedUser.studentStaffNumber,
       tagRef,
       result: isMatch ? 'match' : 'mismatch',
       mismatchReason: reason,
