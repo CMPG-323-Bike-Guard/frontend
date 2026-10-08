@@ -112,8 +112,8 @@ const liveApi = {
   markNotificationRead: (notificationId: string) =>
     patch<void>(endpoints.users.notification(notificationId), { read: true }),
 
-  grantPermission: (bikeId: string, studentNumber: string, _actorUserId: string) =>
-    post<BikeView>(endpoints.bikes.permissions(bikeId), { studentNumber }),
+    grantPermission: (bikeId: string, studentNumber: string, _actorUserId: string, name?: string) =>
+    post<BikeView>(endpoints.bikes.permissions(bikeId), { studentNumber, name: name || undefined }),
   revokePermission: (permissionId: string, _actorUserId: string) =>
     request<BikeView>(endpoints.bikes.permission(permissionId), { method: 'DELETE' }),
 

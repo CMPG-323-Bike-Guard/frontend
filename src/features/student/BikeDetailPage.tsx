@@ -46,6 +46,7 @@ export function BikeDetailPage() {
 
   const [dialog, setDialog] = useState<DialogKind>(null);
   const [shareNumber, setShareNumber] = useState('');
+  const [shareName, setShareName] = useState('');
   const [shareError, setShareError] = useState<string | undefined>();
   const [pageError, setPageError] = useState<string | null>(null);
 
@@ -88,10 +89,15 @@ export function BikeDetailPage() {
     if (problem) return;
     setPageError(null);
     try {
-      await grant.mutateAsync({ bikeId: bike.bikeId, studentNumber: shareNumber, actorUserId: user.userId });
-      toast.confirm('That student can now take this bike through the gate.');
+      await grant.mutateAsync({
+        bikeId: bike.bikeId,
+        studentNumber: shareNumber,
+        name: shareName.trim() || undefined,
+        actorUserId: user.userId,
+      });
+      toast.confirm('They can now take this bike through the gate with their own card.');
       setShareNumber('');
-      setDialog(null);
+      setShareName('');
     } catch (error) {
       if (error instanceof ApiError && error.field === 'studentNumber') setShareError(error.message);
       else setPageError(error instanceof ApiError ? error.message : 'The authorisation could not be saved.');
@@ -358,8 +364,8 @@ export function BikeDetailPage() {
       <Modal
         open={dialog === 'share'}
         onClose={() => setDialog(null)}
-        title="Authorise another student"
-        description="They can then take this bike through the gate using their own card."
+        title="Let someone use this bike"
+description="Any NWU student can take this bike through the gate with their own card. They do not need a BikeGuard account."
         footer={
           <>
             <Button variant="subtle" className="w-32" onClick={() => setDialog(null)}>
@@ -385,6 +391,14 @@ export function BikeDetailPage() {
           )}
         </Field>
         <p className="mt-3 text-sm text-ink-500">
+          <div className="mt-4">
+            <Field label="Their name" hint="Optional. Only so you recognise them in your list.">
+              {({ id, describedBy, invalid }) => (
+                <Input id={id} aria-describedby={describedBy} invalid={invalid} maxLength={80}
+                value={shareName} onChange={(event) => setShareName(event.target.value)} />
+              )}
+            </Field>
+          </div>
           Every crossing is still logged against whoever tapped their card, so the record shows who actually took the
           bike out.
         </p>

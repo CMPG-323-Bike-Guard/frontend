@@ -119,8 +119,8 @@ export function useRemoveBike() {
 export function useGrantPermission() {
   const refresh = useRefresh();
   return useMutation({
-    mutationFn: (vars: { bikeId: string; studentNumber: string; actorUserId: string }) =>
-      api.grantPermission(vars.bikeId, vars.studentNumber, vars.actorUserId),
+        mutationFn: (vars: { bikeId: string; studentNumber: string; actorUserId: string; name?: string }) =>
+      api.grantPermission(vars.bikeId, vars.studentNumber, vars.actorUserId, vars.name),
     onSuccess: refresh,
   });
 }

@@ -134,7 +134,9 @@ export interface Alarm {
 export interface BikePermission {
   permissionId: string;
   bikeId: string;
-  authorisedUserId: string;
+  authorisedUserId: string | null;
+  authorisedStudentNumber?: string;
+  authorisedName?: string | null;
   status: 'active' | 'revoked';
   grantedAt: string;
   revokedAt: string | null;
