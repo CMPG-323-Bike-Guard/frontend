@@ -131,7 +131,7 @@ export function ManualChecksPage() {
 
       {manualGates.length === 0 && (
         <Alert tone="info" title="Every gate is verifying automatically">
-          You can still log a crossing by hand if you need to — choose the gate below.
+          You can still log a crossing by hand if you need to ,  choose the gate below.
         </Alert>
       )}
 

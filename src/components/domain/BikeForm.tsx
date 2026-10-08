@@ -14,7 +14,7 @@ export interface BikeFormValues extends BikeInput {}
 /**
  * Registration details captured in UC-01 step 2 and FR-STU-02: a name the
  * owner will recognise, the make/model, the frame colour and a reference
- * photo. Nothing else is collected — the Business Case is explicit that the
+ * photo. Nothing else is collected ,  the Business Case is explicit that the
  * system holds the minimum personal data POPIA allows.
  */
 export function BikeForm({

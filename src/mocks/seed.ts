@@ -159,11 +159,11 @@ export function buildSeed() {
     { tagId: 't-10', bikeId: 'b-12', tagRef: 'BG-31FF9B', status: 'deactivated', issuedAt: iso(118 * DAY), deactivatedAt: iso(9 * DAY), replacesTagId: null },
   ];
 
-  // Gate health, mode and manualSince now live directly on Gate — there is no
+  // Gate health, mode and manualSince now live directly on Gate ,  there is no
   // separate lane entity. Only Gate 1 and Gate 2 carry live traffic below.
   const gates: Gate[] = [
-    { gateId: 'g-1', name: 'Gate 1', location: 'Hoffman Street — pilot gate', health: 'good', commissioned: true, mode: 'automated', manualSince: null },
-    { gateId: 'g-2', name: 'Gate 2', location: 'Borcherd Street — staging bridge', health: 'warning', commissioned: true, mode: 'manual', manualSince: iso(42 * 60_000) },
+    { gateId: 'g-1', name: 'Gate 1', location: 'Hoffman Street ,  pilot gate', health: 'good', commissioned: true, mode: 'automated', manualSince: null },
+    { gateId: 'g-2', name: 'Gate 2', location: 'Borcherd Street ,  staging bridge', health: 'warning', commissioned: true, mode: 'manual', manualSince: iso(42 * 60_000) },
     { gateId: 'g-3', name: 'Gate 3', location: 'Esselen Street', health: 'not_commissioned', commissioned: false, mode: 'automated', manualSince: null },
     { gateId: 'g-4', name: 'Gate 4', location: 'Meyer Street', health: 'not_commissioned', commissioned: false, mode: 'automated', manualSince: null },
     { gateId: 'g-5', name: 'Gate 5', location: 'Thabo Mbeki Avenue', health: 'not_commissioned', commissioned: false, mode: 'automated', manualSince: null },

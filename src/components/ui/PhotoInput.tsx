@@ -35,7 +35,7 @@ export function PhotoInput({
       return;
     }
     if (file.size > MAX_PHOTO_BYTES) {
-      setProblem('That photo is larger than 5 MB. Choose a smaller one — the rest of your details are safe.');
+      setProblem('That photo is larger than 5 MB. Choose a smaller one ,  the rest of your details are safe.');
       return;
     }
     setReading(true);
@@ -47,7 +47,7 @@ export function PhotoInput({
     reader.onerror = () => {
       // UC-01 error flow: a failed upload must not discard the other fields.
       setReading(false);
-      setProblem('That photo could not be read. Try again — nothing else you have typed is lost.');
+      setProblem('That photo could not be read. Try again ,  nothing else you have typed is lost.');
       onChange(file, null);
     };
     reader.readAsDataURL(file);

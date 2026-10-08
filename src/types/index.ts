@@ -23,7 +23,7 @@ export type BikeStatus =
   | 'pending_approval' // submitted, waiting for admin review
   | 'rejected' // admin rejected, reason recorded
   | 'tag_pending' // approved; tag allocated or awaiting stock (UC-04)
-  | 'active' // tag collected and fitted — recognised at the gate
+  | 'active' // tag collected and fitted ,  recognised at the gate
   | 'removed'; // student removed the bike from their profile (FR-STU-05)
 
 export type TagStatus = 'active' | 'deactivated' | 'lost' | 'stolen' | 'awaiting_collection';

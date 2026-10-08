@@ -34,8 +34,8 @@ export function CrossingTable({ rows, showGate = true }: { rows: CrossingView[];
               <span className="font-medium text-ink-900">{userName ?? 'Unidentified person'}</span>
               {studentStaffNumber && <span className="block text-xs text-ink-500">{studentStaffNumber}</span>}
             </Td>
-            <Td className="text-ink-700">{bikeName ?? (event.note ? event.note : '—')}</Td>
-            <Td className="text-ink-500">{event.studentNumber ?? '—'}</Td>
+            <Td className="text-ink-700">{bikeName ?? (event.note ? event.note : ', ')}</Td>
+            <Td className="text-ink-500">{event.studentNumber ?? ', '}</Td>
             <Td className="text-ink-500">{shortRef(event.tagRef)}</Td>
             <Td>
               <div className="flex flex-col gap-1">
@@ -48,7 +48,7 @@ export function CrossingTable({ rows, showGate = true }: { rows: CrossingView[];
             </Td>
             <Td align="right">
               {event.verificationMs === null ? (
-                <span className="text-ink-400">—</span>
+                <span className="text-ink-400">, </span>
               ) : (
                 <span className={cx(event.verificationMs > VERIFICATION_BUDGET_MS ? 'text-alert-600' : 'text-ink-600')}>
                   {event.verificationMs} ms

@@ -66,7 +66,7 @@ export function formatBytes(bytes: number): string {
  * without putting a full identifier on a workstation in a public gatehouse.
  */
 export function shortRef(ref: string | null | undefined): string {
-  if (!ref) return '—';
+  if (!ref) return ', ';
   return ref.length <= 12 ? ref : `${ref.slice(0, 10)}…`;
 }
 

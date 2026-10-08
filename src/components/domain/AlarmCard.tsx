@@ -17,7 +17,7 @@ export type Resolution = 'cleared_in_person' | 'reported_stolen' | 'escalated';
 /**
  * FR-SEC-04: the alarm shows the photo of the person whose card was tapped,
  * their number, the bike the tag is registered to and the bikes that person
- * has registered — everything a guard needs to decide without leaving the
+ * has registered ,  everything a guard needs to decide without leaving the
  * screen.
  */
 export function AlarmCard({
@@ -159,7 +159,7 @@ export function AlarmCard({
         {live && onResolve && (
           <div className="mt-4 flex flex-wrap gap-2">
             <Button icon={<ShieldCheck className="h-4 w-4" />} onClick={() => setDialog('cleared_in_person')}>
-              Checked in person — all clear
+              Checked in person ,  all clear
             </Button>
             <Button variant="danger" icon={<Siren className="h-4 w-4" />} onClick={() => setDialog('reported_stolen')}>
               Report as stolen

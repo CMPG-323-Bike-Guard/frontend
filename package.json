@@ -2,7 +2,7 @@
   "name": "bikeguard-frontend",
   "private": true,
   "version": "1.0.0",
-  "description": "BikeGuard — RFID bicycle access control and theft verification frontend for North-West University (NWU).",
+  "description": "BikeGuard ,  RFID bicycle access control and theft verification frontend for North-West University (NWU).",
   "type": "module",
   "scripts": {
     "dev": "vite",

@@ -10,7 +10,7 @@ import { Select } from '@/components/ui/Input';
 import { useToast } from '@/components/ui/Toast';
 
 const SCENARIOS = [
-  { value: 'match', label: 'Registered pair — gate opens' },
+  { value: 'match', label: 'Registered pair ,  gate opens' },
   { value: 'tag_registered_to_other_user', label: 'Bike belongs to someone else' },
   { value: 'tag_not_registered', label: 'Tag has never been registered' },
   { value: 'tag_reported_lost', label: 'Tag reported lost or stolen' },
@@ -20,7 +20,7 @@ const SCENARIOS = [
 type Scenario = (typeof SCENARIOS)[number]['value'];
 
 /**
- * Demonstration harness — not part of the product.
+ * Demonstration harness ,  not part of the product.
  *
  * There is no reader hardware and no verification engine behind this build, so
  * this panel generates the gate events that the engine would produce. It is

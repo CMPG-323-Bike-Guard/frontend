@@ -55,7 +55,7 @@ export class MockApiError extends Error {
 }
 
 // ---------------------------------------------------------------------------
-// Realtime channel (stands in for Socket.io / WSS — TDEC-05)
+// Realtime channel (stands in for Socket.io / WSS ,  TDEC-05)
 // ---------------------------------------------------------------------------
 
 export type RealtimeEvent =
@@ -98,7 +98,7 @@ function permissionViews(bikeId: string): PermissionView[] {
       return {
         ...permission,
         authorisedUserName: user?.name ?? 'Unknown student',
-        authorisedStudentNumber: user?.studentStaffNumber ?? '—',
+        authorisedStudentNumber: user?.studentStaffNumber ?? ', ',
       };
     });
 }
@@ -249,7 +249,7 @@ function buildReports(days: number): ReportBundle {
         ({
           userId: user?.userId ?? null,
           name: user?.name ?? 'Unidentified person',
-          studentStaffNumber: user?.studentStaffNumber ?? '—',
+          studentStaffNumber: user?.studentStaffNumber ?? ', ',
           count: 0,
           lastSeen: event.timestamp,
           reasons: [],
@@ -283,7 +283,7 @@ function buildReports(days: number): ReportBundle {
 }
 
 // ---------------------------------------------------------------------------
-// Operations — grouped to match the REST resources in src/api/endpoints.ts
+// Operations ,  grouped to match the REST resources in src/api/endpoints.ts
 // ---------------------------------------------------------------------------
 
 export interface CrossingFilters {
@@ -305,7 +305,7 @@ export interface BikeInput {
 export const mockApi = {
   /**
    * There is no real backend or password store yet, so this only checks
-   * that the number belongs to an active account — it does not verify the
+   * that the number belongs to an active account ,  it does not verify the
    * password. Replace this with a real credential check once auth exists.
    */
   async login(studentStaffNumber: string, _password: string): Promise<Session> {
@@ -574,7 +574,7 @@ export const mockApi = {
       guardUserId,
       verificationMs: null,
       offline: true,
-      note: `${input.bikeDescription.trim()}${input.note.trim() ? ` — ${input.note.trim()}` : ''}`,
+      note: `${input.bikeDescription.trim()}${input.note.trim() ? ` ,  ${input.note.trim()}` : ''}`,
     };
     db.events.push(event);
     record(guardUserId, 'crossing.manual', 'gate_event', event.eventId, `Manual crossing for ${input.studentNumber}.`);
@@ -801,7 +801,7 @@ export const mockApi = {
 
   /**
    * Produces the gate events that the real verification engine would produce.
-   * Only the demo simulator calls this — it is not part of the production API
+   * Only the demo simulator calls this ,  it is not part of the production API
    * surface and has no equivalent in src/api/endpoints.ts.
    */
   async simulateCrossing(

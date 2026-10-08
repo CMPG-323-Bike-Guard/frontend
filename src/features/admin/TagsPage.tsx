@@ -168,7 +168,7 @@ export function TagsPage() {
                         <span className="text-ink-900">{view.owner.name}</span>
                         <span className="block text-xs text-ink-500">{view.owner.studentStaffNumber}</span>
                       </Td>
-                      <Td className="text-ink-600">{view.tag!.issuedAt ? formatDate(view.tag!.issuedAt) : '—'}</Td>
+                      <Td className="text-ink-600">{view.tag!.issuedAt ? formatDate(view.tag!.issuedAt) : ', '}</Td>
                       <Td>
                         <TagStatusBadge status={view.tag!.status} />
                         {view.tag!.replacesTagId && <span className="block text-xs text-ink-500">Replacement tag</span>}

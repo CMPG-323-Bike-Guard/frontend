@@ -189,7 +189,7 @@ export function BikeDetailPage() {
       {(tag?.status === 'lost' || tag?.status === 'stolen') && (
         <Alert tone="alert" title={tag.status === 'stolen' ? 'This bike is flagged as stolen' : 'This tag is flagged as lost'}>
           Guards are alerted if the tag is presented at a gate. Collect a replacement tag from Protection Services to
-          restore gate access — your registration history stays with the bike.
+          restore gate access ,  your registration history stays with the bike.
         </Alert>
       )}
 
@@ -199,7 +199,7 @@ export function BikeDetailPage() {
           title="People who may use this bike"
           description="Their card opens the gate with this bike's tag. You can withdraw this at any time."
           action={
-            bike.status === 'active' ? (
+            bike.status === 'active' || bike.status === 'tag_pending' ? (
               <Button variant="subtle" size="sm" icon={<UserPlus className="h-4 w-4" />} onClick={() => setDialog('share')}>
                 Authorise a student
               </Button>
@@ -314,7 +314,7 @@ export function BikeDetailPage() {
           ) : (
             <>
               Tag {tag?.tagRef} on “{bike.name}” will be flagged. Go to Protection Services with your student card for a
-              replacement tag — your registration and its history stay exactly as they are.
+              replacement tag ,  your registration and its history stay exactly as they are.
             </>
           )}
         </p>

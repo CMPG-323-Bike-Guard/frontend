@@ -24,7 +24,7 @@ import { GateSimulator } from './GateSimulator';
 import { ReaderEmulator } from './ReaderEmulator';
 
 /**
- * Guard dashboard — UC-02, UC-03 and FR-SEC-01 to FR-SEC-06.
+ * Guard dashboard ,  UC-02, UC-03 and FR-SEC-01 to FR-SEC-06.
  *
  * Everything a guard needs while a rider is standing at the boom is on this
  * one screen: which gates are live, what the last decision was, and any alarm
@@ -299,7 +299,7 @@ function ClosedAlarms() {
           <p className="mt-0.5 text-sm text-ink-600">
             {view.alarm.status === 'reported_stolen' ? 'Reported stolen' : 'Cleared in person'}
             {view.resolvedByName ? ` by ${view.resolvedByName}` : ''}
-            {view.alarm.notes ? ` — ${view.alarm.notes}` : ''}
+            {view.alarm.notes ? ` ,  ${view.alarm.notes}` : ''}
           </p>
         </li>
       ))}

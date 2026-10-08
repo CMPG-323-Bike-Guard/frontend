@@ -75,7 +75,7 @@ export function RegisterBikePage() {
 
       <Alert tone="info" title="What happens next">
         Protection Services checks these details, programmes an RFID tag and tells you when to collect it. You fit the
-        tag to the frame yourself — it takes a minute and needs no tools.
+        tag to the frame yourself ,  it takes a minute and needs no tools.
       </Alert>
 
       <Card>
