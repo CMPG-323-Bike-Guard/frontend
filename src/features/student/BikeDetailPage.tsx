@@ -8,17 +8,21 @@ import {
   useRemoveBike,
   useReportTagLost,
   useRevokePermission,
+  useSubmitBikePhoto,
   useSubmitBike,
 } from '@/api/queries';
 import { ApiError } from '@/api/client';
 import { BIKE_STATUS_META } from '@/lib/constants';
 import { formatDate } from '@/lib/format';
 import { validateStudentNumber } from '@/lib/validation';
+import { validatePhoto } from '@/lib/validation';
 import { Alert } from '@/components/ui/Alert';
+import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card, CardBody, CardHeader } from '@/components/ui/Card';
 import { Field } from '@/components/ui/Field';
 import { Input } from '@/components/ui/Input';
+import { PhotoInput } from '@/components/ui/PhotoInput';
 import { Modal } from '@/components/ui/Modal';
 import { SkeletonRows } from '@/components/ui/Spinner';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -41,6 +45,7 @@ export function BikeDetailPage() {
   const reportLost = useReportTagLost();
   const removeBike = useRemoveBike();
   const submitBike = useSubmitBike();
+  const submitBikePhoto = useSubmitBikePhoto();
   const grant = useGrantPermission();
   const revoke = useRevokePermission();
 
@@ -49,6 +54,8 @@ export function BikeDetailPage() {
   const [shareName, setShareName] = useState('');
   const [shareError, setShareError] = useState<string | undefined>();
   const [pageError, setPageError] = useState<string | null>(null);
+  const [photoCandidate, setPhotoCandidate] = useState<string | null>(null);
+  const [photoError, setPhotoError] = useState<string | null>(null);
 
   if (query.isLoading) return <SkeletonRows rows={5} />;
   if (query.isError || !query.data) {
@@ -80,6 +87,40 @@ export function BikeDetailPage() {
       setDialog(null);
     } catch (error) {
       setPageError(error instanceof ApiError ? error.message : 'That action could not be completed.');
+    }
+  }
+
+  function selectBikePhoto(file: File | null, dataUrl: string | null) {
+    setPhotoError(null);
+    if (!file || !dataUrl) {
+      setPhotoCandidate(null);
+      return;
+    }
+    const problem = validatePhoto(file, false);
+    if (problem) {
+      setPhotoCandidate(null);
+      setPhotoError(problem);
+      return;
+    }
+    setPhotoCandidate(dataUrl);
+  }
+
+  async function saveBikePhoto() {
+    if (!photoCandidate) {
+      setPhotoError('Choose a JPG, PNG or WebP photo before submitting.');
+      return;
+    }
+    setPhotoError(null);
+    try {
+      await submitBikePhoto.mutateAsync({
+        bikeId: bike.bikeId,
+        actorUserId: user.userId,
+        photoDataUrl: photoCandidate,
+      });
+      setPhotoCandidate(null);
+      toast.confirm('Your bike photo was submitted for admin approval.');
+    } catch (error) {
+      setPhotoError(error instanceof ApiError ? error.message : 'Your bike photo could not be submitted.');
     }
   }
 
@@ -115,8 +156,8 @@ export function BikeDetailPage() {
 
       <Card>
         <CardBody className="flex flex-col gap-5 sm:flex-row">
-          {bike.photoPath && (
-            <img src={bike.photoPath} alt={`${bike.name}, a ${bike.colour} ${bike.makeModel}`} className="h-44 w-full rounded-control object-cover sm:w-64" />
+          {bike.photo.live && (
+            <img src={bike.photo.live} alt={`${bike.name}, a ${bike.colour} ${bike.makeModel}`} className="h-44 w-full rounded-control object-cover sm:w-64" />
           )}
           <div className="min-w-0 flex-1">
             <h1 className="text-2xl font-semibold">{bike.name}</h1>
@@ -152,6 +193,64 @@ export function BikeDetailPage() {
               )}
             </dl>
           </div>
+        </CardBody>
+      </Card>
+
+      <Card>
+        <CardHeader title="Bike photo" description="A new photo stays private until an administrator approves it." />
+        <CardBody className="flex flex-col gap-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <p className="text-sm font-semibold text-ink-700">Current live photo</p>
+            {bike.photo.live ? (
+              <img src={bike.photo.live} alt={`Current live photo of ${bike.name}`} className="h-16 w-24 rounded-control object-cover" />
+            ) : (
+              <span className="text-sm text-ink-500">No current photo</span>
+            )}
+          </div>
+
+          {bike.photo.status === 'pending' && bike.photo.pending ? (
+            <div className="flex flex-col gap-3 rounded-card border border-tag-notice-orange/40 bg-tag-notice-orange/10 p-4 sm:flex-row sm:items-center">
+              <img src={bike.photo.pending} alt={`New bike photo awaiting admin approval for ${bike.name}`} className="h-16 w-24 rounded-control object-cover" />
+              <div>
+                <Badge variant="tag-ready">Pending approval</Badge>
+                <p className="mt-1 text-sm font-medium text-ink-900">Awaiting admin approval</p>
+              </div>
+              <span className="sr-only" role="status">The new bike photo is pending admin approval.</span>
+            </div>
+          ) : (
+            <>
+              {bike.photo.status === 'rejected' && (
+                <>
+                  <Badge tone="alert">Rejected</Badge>
+                  <Alert tone="alert" title="Your new photo was not approved">
+                    {bike.photo.rejectionReason || 'The administrator did not provide a reason.'}
+                  </Alert>
+                  <span className="sr-only" role="status">The new bike photo was rejected.</span>
+                </>
+              )}
+              {photoError && <Alert tone="alert">{photoError}</Alert>}
+              <PhotoInput
+                id={`bike-photo-${bike.bikeId}`}
+                value={photoCandidate}
+                onChange={selectBikePhoto}
+                helperText="Choose a clear side-on photo of the whole bike."
+                buttonLabel="Upload a different photo"
+                inputLabel="New bike photo file"
+                previewAlt={`Preview of a new photo for ${bike.name}`}
+                disabled={submitBikePhoto.isPending}
+              />
+              <div>
+                <Button
+                  type="button"
+                  loading={submitBikePhoto.isPending}
+                  disabled={!photoCandidate}
+                  onClick={saveBikePhoto}
+                >
+                  Submit for approval
+                </Button>
+              </div>
+            </>
+          )}
         </CardBody>
       </Card>
 

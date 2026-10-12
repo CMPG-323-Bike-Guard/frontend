@@ -23,8 +23,8 @@ export function BikeCard({ view, to }: { view: BikeView; to: string }) {
       to={to}
       className="group flex gap-4 rounded-card border border-ink-100 bg-white p-3 transition-colors hover:border-signal-300"
     >
-      {bike.photoPath ? (
-        <img src={bike.photoPath} alt="" className="h-24 w-32 shrink-0 rounded-control object-cover" />
+      {bike.photo.live ? (
+        <img src={bike.photo.live} alt="" className="h-24 w-32 shrink-0 rounded-control object-cover" />
       ) : (
         <div className="h-24 w-32 shrink-0 rounded-control bg-ink-50" />
       )}

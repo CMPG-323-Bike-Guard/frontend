@@ -154,9 +154,9 @@ export function RegistrationsPage() {
         {(registrations.data ?? []).map((view) => (
           <Card key={view.bike.bikeId}>
             <CardBody className="flex flex-col gap-4 sm:flex-row">
-              {view.bike.photoPath && (
+              {view.bike.photo.live && (
                 <img
-                  src={view.bike.photoPath}
+                  src={view.bike.photo.live}
                   alt={`${view.bike.name}, a ${view.bike.colour} ${view.bike.makeModel}`}
                   className="h-32 w-full rounded-control object-cover sm:w-48"
                 />

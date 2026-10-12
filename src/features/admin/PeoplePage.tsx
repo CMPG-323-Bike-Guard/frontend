@@ -117,7 +117,7 @@ export function PeoplePage() {
                     <tr key={user.userId} className="hover:bg-ink-50/60">
                       <Td>
                         <span className="flex items-center gap-2.5">
-                          <Avatar name={user.name} src={user.photoPath} size="sm" />
+                          <Avatar name={user.name} src={user.photo.live} size="sm" />
                           <span className="font-medium text-ink-900">{user.name}</span>
                         </span>
                       </Td>

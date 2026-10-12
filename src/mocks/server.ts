@@ -841,6 +841,13 @@ export const mockApi = {
     target.photo.submittedAt ??= target.photo.reviewedAt;
     target.photoPath = target.photo.live;
     record(adminUserId, 'photo.approved', targetType, entityId, `${targetType} photo approved.`);
+    const ownerUserId = targetType === 'user' ? (target as User).userId : (target as Bike).ownerUserId;
+    const subject = targetType === 'user' ? 'Your profile picture' : `The photo for ${target.name}`;
+    notify(ownerUserId, {
+      title: `${subject} was approved`,
+      body: `${subject} is approved and now live.`,
+      kind: 'photo_review',
+    });
     return photoReviewResult(targetType, entityId, target.photo);
   },
 
@@ -867,6 +874,13 @@ export const mockApi = {
     target.photo.reviewedAt = nowIso();
     target.photoPath = target.photo.live;
     record(adminUserId, 'photo.rejected', targetType, entityId, `Photo rejected: ${rejectionReason}`);
+    const ownerUserId = targetType === 'user' ? (target as User).userId : (target as Bike).ownerUserId;
+    const subject = targetType === 'user' ? 'Your profile picture' : `The photo for ${target.name}`;
+    notify(ownerUserId, {
+      title: `${subject} was not approved`,
+      body: `${subject} was not approved. Reason: ${rejectionReason}`,
+      kind: 'photo_review',
+    });
     return photoReviewResult(targetType, entityId, target.photo);
   },
 

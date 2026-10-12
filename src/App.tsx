@@ -27,6 +27,7 @@ import { RegistrationsPage } from '@/features/admin/RegistrationsPage';
 import { TagsPage } from '@/features/admin/TagsPage';
 import { PeoplePage } from '@/features/admin/PeoplePage';
 import { AuditPage } from '@/features/admin/AuditPage';
+import { PhotoReviewsPage } from '@/features/admin/PhotoReviewsPage';
 
 const AdminReportsPage = lazy(() =>
   import('@/features/admin/ReportsPage').then((module) => ({ default: module.ReportsPage })),
@@ -61,6 +62,7 @@ export default function App() {
             <Route element={<AppShell />}>
 
               <Route path={PROFILE_PATH} element={<ProfilePage />} />
+              <Route path="/notifications" element={<NotificationsPage />} />
 
               {/* Home */}
               <Route path="/" element={<RoleHome />} />
@@ -75,10 +77,6 @@ export default function App() {
                 <Route
                   path="/my-bikes/:bikeId"
                   element={<BikeDetailPage />}
-                />
-                <Route
-                  path="/notifications"
-                  element={<NotificationsPage />}
                 />
               </Route>
 
@@ -108,6 +106,7 @@ export default function App() {
                   element={<CrossingLogPage canExport />}
                 />
                 <Route path="/admin/people" element={<PeoplePage />} />
+                <Route path="/admin/photo-reviews" element={<PhotoReviewsPage />} />
                 <Route path="/admin/audit" element={<AuditPage />} />
                 <Route
                   path="/reports"

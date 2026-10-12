@@ -3,6 +3,7 @@ import {
   BikeIcon,
   ClipboardList,
   FileBarChart,
+  Images,
   LayoutDashboard,
   MonitorCheck,
   ScrollText,
@@ -46,6 +47,7 @@ export const NAVIGATION: Record<Role, NavItem[]> = {
     { to: '/guard', label: 'Gate board', icon: MonitorCheck, end: true },
     { to: '/guard/manual', label: 'Manual checks', icon: ClipboardList },
     { to: '/guard/crossings', label: 'Crossing log', icon: ScrollText },
+    { to: '/notifications', label: 'Notifications', icon: Bell },
   ],
   admin: [
     { to: '/admin', label: 'Overview', icon: LayoutDashboard, end: true },
@@ -53,8 +55,10 @@ export const NAVIGATION: Record<Role, NavItem[]> = {
     { to: '/admin/tags', label: 'Tags', icon: Tag },
     { to: '/admin/crossings', label: 'Crossing log', icon: ScrollText },
     { to: '/admin/people', label: 'People', icon: Users },
+    { to: '/admin/photo-reviews', label: 'Photo reviews', icon: Images },
     { to: '/admin/audit', label: 'Audit trail', icon: ClipboardList },
     { to: '/reports', label: 'Reports', icon: FileBarChart },
+    { to: '/notifications', label: 'Notifications', icon: Bell },
   ],
  
 };

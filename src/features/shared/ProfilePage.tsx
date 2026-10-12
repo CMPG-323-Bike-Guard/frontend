@@ -1,17 +1,20 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { useCurrentUser } from '@/auth/AuthContext';
-import { useChangeOwnPassword, useUpdateOwnDetails } from '@/api/queries';
+import { useChangeOwnPassword, useSubmitProfilePhoto, useUpdateOwnDetails } from '@/api/queries';
 import { ApiError } from '@/api/client';
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
+import { Avatar } from '@/components/ui/Avatar';
+import { Badge } from '@/components/ui/Badge';
 import { Card, CardBody, CardHeader } from '@/components/ui/Card';
 import { Field } from '@/components/ui/Field';
 import { Input } from '@/components/ui/Input';
+import { PhotoInput } from '@/components/ui/PhotoInput';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { useToast } from '@/components/ui/Toast';
 import { ROLE_LABEL } from '@/lib/constants';
-import { hasErrors, requireText, type FieldErrors } from '@/lib/validation';
+import { hasErrors, requireText, validatePhoto, type FieldErrors } from '@/lib/validation';
 
 type DetailsField = 'name' | 'email' | 'phone';
 type PasswordField = 'currentPassword' | 'newPassword' | 'confirmPassword';
@@ -75,6 +78,7 @@ export function ProfilePage() {
   const toast = useToast();
   const updateDetails = useUpdateOwnDetails();
   const changePassword = useChangeOwnPassword();
+  const submitProfilePhoto = useSubmitProfilePhoto();
   const [details, setDetails] = useState<DetailsValues>({
     name: user.name,
     email: user.email,
@@ -82,6 +86,8 @@ export function ProfilePage() {
   });
   const [detailErrors, setDetailErrors] = useState<FieldErrors<DetailsField>>({});
   const [detailError, setDetailError] = useState<string | null>(null);
+  const [photoCandidate, setPhotoCandidate] = useState<string | null>(null);
+  const [photoError, setPhotoError] = useState<string | null>(null);
   const [passwords, setPasswords] = useState<PasswordValues>(EMPTY_PASSWORDS);
   const [passwordErrors, setPasswordErrors] = useState<FieldErrors<PasswordField>>({});
   const [passwordError, setPasswordError] = useState<string | null>(null);
@@ -116,6 +122,36 @@ export function ProfilePage() {
       toast.confirm('Your details were updated.');
     } catch (error) {
       setDetailError(errorMessage(error, 'Your details could not be updated.'));
+    }
+  }
+
+  function selectPhoto(file: File | null, dataUrl: string | null) {
+    setPhotoError(null);
+    if (!file || !dataUrl) {
+      setPhotoCandidate(null);
+      return;
+    }
+    const problem = validatePhoto(file, false);
+    if (problem) {
+      setPhotoCandidate(null);
+      setPhotoError(problem);
+      return;
+    }
+    setPhotoCandidate(dataUrl);
+  }
+
+  async function submitPhoto() {
+    if (!photoCandidate) {
+      setPhotoError('Choose a JPG, PNG or WebP picture before submitting.');
+      return;
+    }
+    setPhotoError(null);
+    try {
+      await submitProfilePhoto.mutateAsync({ actorUserId: user.userId, photoDataUrl: photoCandidate });
+      setPhotoCandidate(null);
+      toast.confirm('Your picture was submitted for admin approval.');
+    } catch (error) {
+      setPhotoError(errorMessage(error, 'Your picture could not be submitted.'));
     }
   }
 
@@ -182,6 +218,70 @@ export function ProfilePage() {
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
       <PageHeader title="Profile" description="Your details and password." />
+
+      <Card>
+        <CardHeader title="Profile picture" description="New pictures are visible after admin approval." />
+        <CardBody className="flex flex-col gap-4">
+          <div className="flex items-center gap-4">
+            <Avatar name={user.name} src={user.photo.live} size="xl" />
+            <div>
+              <p className="font-semibold text-ink-900">Current picture</p>
+              <p className="text-sm text-ink-500">Only your approved picture is shown on your profile.</p>
+            </div>
+          </div>
+
+          {user.photo.status === 'pending' && user.photo.pending ? (
+            <div className="flex flex-col gap-3 rounded-card border border-tag-notice-orange/40 bg-tag-notice-orange/10 p-4 sm:flex-row sm:items-center">
+              <div className="flex min-w-0 flex-1 items-center gap-3">
+                <img
+                  src={user.photo.pending}
+                  alt="New profile picture awaiting admin approval"
+                  className="h-16 w-16 shrink-0 rounded-control object-cover"
+                />
+                <div>
+                  <Badge variant="tag-ready">Pending approval</Badge>
+                  <p className="mt-1 text-sm font-medium text-ink-900">Awaiting admin approval</p>
+                </div>
+              </div>
+              <span className="sr-only" role="status">Your new profile picture is pending admin approval.</span>
+            </div>
+          ) : (
+            <>
+              {user.photo.status === 'rejected' && (
+                <>
+                  <Badge tone="alert">Rejected</Badge>
+                  <Alert tone="alert" title="Your new picture was not approved">
+                    {user.photo.rejectionReason || 'The administrator did not provide a reason.'}
+                  </Alert>
+                  <span className="sr-only" role="status">Your new profile picture was rejected.</span>
+                </>
+              )}
+
+              {photoError && <Alert tone="alert">{photoError}</Alert>}
+              <PhotoInput
+                id="profile-picture"
+                value={photoCandidate}
+                onChange={selectPhoto}
+                helperText="Choose a clear picture of yourself."
+                buttonLabel="Change picture"
+                inputLabel="Profile picture file"
+                previewAlt="Preview of your new profile picture"
+                disabled={submitProfilePhoto.isPending}
+              />
+              <div>
+                <Button
+                  type="button"
+                  loading={submitProfilePhoto.isPending}
+                  disabled={!photoCandidate}
+                  onClick={submitPhoto}
+                >
+                  Submit for approval
+                </Button>
+              </div>
+            </>
+          )}
+        </CardBody>
+      </Card>
 
       <Card>
         <CardHeader title="Your details" description="Your student or staff number and role cannot be changed here." />

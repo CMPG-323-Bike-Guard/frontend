@@ -1,4 +1,4 @@
-import { BellOff, Tag } from 'lucide-react';
+import { BellOff, Images, Tag } from 'lucide-react';
 import { useCurrentUser } from '@/auth/AuthContext';
 import { useMarkNotificationRead, useNotifications } from '@/api/queries';
 import { relativeTime } from '@/lib/format';
@@ -22,7 +22,7 @@ export function NotificationsPage() {
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6">
-      <PageHeader title="Notifications" description="Updates from Protection Services about your bikes and tags." />
+      <PageHeader title="Notifications" description="Updates about your account, photos, bikes, and tags." />
 
       {query.isLoading && <SkeletonRows rows={4} />}
       {query.isError && <Alert tone="alert">{(query.error as Error).message}</Alert>}
@@ -46,6 +46,11 @@ export function NotificationsPage() {
                   {notification.kind === 'tag_ready' && (
                     <span className="mt-0.5 rounded-control bg-warn-100 p-1.5 text-warn-600">
                       <Tag className="h-4 w-4" aria-hidden="true" />
+                    </span>
+                  )}
+                  {notification.kind === 'photo_review' && (
+                    <span className="mt-0.5 rounded-control bg-signal-50 p-1.5 text-signal-700">
+                      <Images className="h-4 w-4" aria-hidden="true" />
                     </span>
                   )}
                   <div className="min-w-0 flex-1">

@@ -83,7 +83,7 @@ export function AlarmCard({
             <h3 className="text-sm font-semibold text-ink-500">Card presented</h3>
             {presentedUser ? (
               <div className="mt-2 flex items-center gap-3">
-                <Avatar name={presentedUser.name} src={presentedUser.photoPath} size="lg" />
+                <Avatar name={presentedUser.name} src={presentedUser.photo.live} size="lg" />
                 <div className="min-w-0">
                   <p className="truncate font-semibold text-ink-900">{presentedUser.name}</p>
                   <p className="text-sm text-ink-600">{presentedUser.studentStaffNumber}</p>
@@ -99,8 +99,8 @@ export function AlarmCard({
                 <ul className="mt-1.5 flex flex-wrap gap-2">
                   {ownerBikes.map((bike) => (
                     <li key={bike.bikeId} className="w-32">
-                      {bike.photoPath && (
-                        <img src={bike.photoPath} alt="" className="h-20 w-32 rounded-control object-cover" />
+                      {bike.photo.live && (
+                        <img src={bike.photo.live} alt="" className="h-20 w-32 rounded-control object-cover" />
                       )}
                       <p className="mt-1 truncate text-xs font-medium text-ink-700">{bike.name}</p>
                     </li>
@@ -115,9 +115,9 @@ export function AlarmCard({
             <p className="mt-2 text-sm text-ink-600">Tag {event.tagRef ?? 'not read'}</p>
             {tagBike ? (
               <div className="mt-2">
-                {tagBike.photoPath && (
+                {tagBike.photo.live && (
                   <img
-                    src={tagBike.photoPath}
+                    src={tagBike.photo.live}
                     alt={`${tagBike.name}, a ${tagBike.colour} ${tagBike.makeModel}`}
                     className="h-28 w-44 rounded-control object-cover"
                   />

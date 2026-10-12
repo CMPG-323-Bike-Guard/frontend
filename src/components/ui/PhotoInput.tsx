@@ -2,8 +2,7 @@ import { useRef, useState, type ChangeEvent } from 'react';
 import { ImagePlus, RotateCcw } from 'lucide-react';
 import { Button } from './Button';
 import { cx } from '@/lib/cx';
-
-const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
+import { PHOTO_ACCEPTED_TYPES, PHOTO_MAX_BYTES } from '@/lib/constants';
 
 /**
  * Reference-photo picker used during registration (FR-STU-02, UC-01 step 2).
@@ -16,12 +15,22 @@ export function PhotoInput({
   onChange,
   invalid,
   describedBy,
+  helperText = 'A clear side-on photo of the whole bike. Guards use this photo to identify your bike when an alarm is raised.',
+  buttonLabel,
+  inputLabel,
+  previewAlt = 'Preview of the bike photo you selected',
+  disabled = false,
 }: {
   id: string;
   value: string | null;
   onChange(file: File | null, dataUrl: string | null): void;
   invalid?: boolean;
   describedBy?: string;
+  helperText?: string;
+  buttonLabel?: string;
+  inputLabel?: string;
+  previewAlt?: string;
+  disabled?: boolean;
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [reading, setReading] = useState(false);
@@ -34,8 +43,15 @@ export function PhotoInput({
       onChange(null, null);
       return;
     }
-    if (file.size > MAX_PHOTO_BYTES) {
-      setProblem('That photo is larger than 5 MB. Choose a smaller one ,  the rest of your details are safe.');
+    const problem = !PHOTO_ACCEPTED_TYPES.includes(file.type)
+      ? 'Use a JPG, PNG or WebP image.'
+      : file.size > PHOTO_MAX_BYTES
+        ? 'That photo is larger than 5 MB. Choose a smaller one.'
+        : null;
+    if (problem) {
+      setProblem(problem);
+      event.currentTarget.value = '';
+      onChange(null, null);
       return;
     }
     setReading(true);
@@ -61,24 +77,23 @@ export function PhotoInput({
       )}
     >
       {value ? (
-        <img src={value} alt="Preview of the bike photo you selected" className="h-28 w-44 rounded-control object-cover" />
+        <img src={value} alt={previewAlt} className="h-28 w-44 rounded-control object-cover" />
       ) : (
         <div className="flex h-28 w-44 items-center justify-center rounded-control bg-white text-ink-300">
           <ImagePlus className="h-7 w-7" aria-hidden="true" />
         </div>
       )}
       <div className="flex-1">
-        <p className="text-sm text-ink-700">
-          A clear side-on photo of the whole bike. Guards use this photo to identify your bike when an alarm is raised.
-        </p>
+        <p className="text-sm text-ink-700">{helperText}</p>
         <p className="mt-1 text-sm text-ink-500">JPG, PNG or WebP, up to 5 MB.</p>
         <div className="mt-3 flex gap-2">
-          <Button type="button" variant="subtle" size="sm" loading={reading} onClick={() => inputRef.current?.click()}>
-            {value ? 'Choose a different photo' : 'Choose a photo'}
+          <Button type="button" variant="subtle" size="sm" loading={reading} disabled={disabled} onClick={() => inputRef.current?.click()} className="focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal-600">
+            {buttonLabel ?? (value ? 'Choose a different photo' : 'Choose a photo')}
           </Button>
           {value && (
             <Button
               type="button"
+              disabled={disabled}
               variant="ghost"
               size="sm"
               icon={<RotateCcw className="h-4 w-4" />}
@@ -92,10 +107,11 @@ export function PhotoInput({
           )}
         </div>
         {problem && (
-          <p className="mt-2 text-sm font-medium text-action-red" role="alert">
+          <p id={`${id}-problem`} className="mt-2 text-sm font-medium text-action-red" role="alert">
             {problem}
           </p>
         )}
+        {inputLabel && <label htmlFor={id} className="sr-only">{inputLabel}</label>}
         <input
           id={id}
           ref={inputRef}
@@ -103,7 +119,8 @@ export function PhotoInput({
           accept="image/jpeg,image/png,image/webp"
           className="sr-only"
           aria-invalid={invalid || undefined}
-          aria-describedby={describedBy}
+          aria-describedby={[describedBy, problem ? `${id}-problem` : undefined].filter(Boolean).join(' ') || undefined}
+          disabled={disabled}
           onChange={handleChange}
         />
       </div>

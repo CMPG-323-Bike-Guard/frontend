@@ -3,7 +3,7 @@ import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { LogOut, Menu, X } from 'lucide-react';
 import { useAuth } from '@/auth/AuthContext';
 import { INSTITUTION, PROFILE_PATH, ROLE_LABEL } from '@/lib/constants';
-import { useNotifications } from '@/api/queries';
+import { useNotifications, usePendingPhotos } from '@/api/queries';
 import { cx } from '@/lib/cx';
 import { Avatar } from '@/components/ui/Avatar';
 import { Brand } from './Brand';
@@ -20,21 +20,22 @@ export function AppShell() {
   const { user, signOut } = useAuth();
   const location = useLocation();
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const notifications = useNotifications(user?.role === 'student' ? user.userId : undefined);
+  const notifications = useNotifications(user?.userId);
+  const pendingPhotos = usePendingPhotos(user?.role === 'admin' ? user.userId : undefined);
 
   useEffect(() => setDrawerOpen(false), [location.pathname]);
 
   if (!user) return null;
   const items = NAVIGATION[user.role];
-  const unreadNotificationCount = user.role === 'student'
-    ? (notifications.data ?? []).filter((notification) => !notification.read).length
-    : 0;
+  const unreadNotificationCount = (notifications.data ?? []).filter((notification) => !notification.read).length;
+  const pendingPhotoCount = user.role === 'admin' ? pendingPhotos.data?.length ?? 0 : 0;
 
   const nav = (
     <nav aria-label="Main" className="flex flex-col gap-0.5">
       {items.map((item) => {
         const Icon = item.icon;
         const showUnreadCount = item.to === '/notifications' && unreadNotificationCount > 0;
+        const showPendingPhotoCount = item.to === '/admin/photo-reviews' && pendingPhotoCount > 0;
         return (
           <NavLink
             key={item.to}
@@ -43,6 +44,8 @@ export function AppShell() {
             aria-label={
               showUnreadCount
                 ? `${item.label}, ${unreadNotificationCount} unread notification${unreadNotificationCount === 1 ? '' : 's'}`
+                : showPendingPhotoCount
+                  ? `${item.label}, ${pendingPhotoCount} pending photo${pendingPhotoCount === 1 ? '' : 's'}`
                 : undefined
             }
             className={({ isActive }) =>
@@ -52,14 +55,16 @@ export function AppShell() {
               )
             }
           >
-            {showUnreadCount ? (
+            {showUnreadCount || showPendingPhotoCount ? (
               <>
                 <span className="flex min-w-0 items-center gap-3">
                   <Icon className="h-[18px] w-[18px] shrink-0" aria-hidden="true" />
                   <span>{item.label}</span>
                 </span>
                 <span className="ml-auto shrink-0 font-bold text-sidebar-unread">
-                  {unreadNotificationCount > 99 ? '99+' : unreadNotificationCount}
+                  {showUnreadCount
+                    ? unreadNotificationCount > 99 ? '99+' : unreadNotificationCount
+                    : pendingPhotoCount > 99 ? '99+' : pendingPhotoCount}
                 </span>
               </>
             ) : (

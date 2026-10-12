@@ -9,6 +9,7 @@ import { Alert } from '@/components/ui/Alert';
 import { Card, CardBody, CardHeader } from '@/components/ui/Card';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { Button, LinkButton } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/Badge';
 import { BikeForm, type BikeFormValues } from '@/components/domain/BikeForm';
 
 /**
@@ -24,14 +25,14 @@ export function RegisterBikePage() {
   const toast = useToast();
   const createBike = useCreateBike();
   const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState<{ name: string } | null>(null);
+  const [done, setDone] = useState<{ name: string; photoPending: boolean } | null>(null);
 
   async function save(values: BikeFormValues, submit: boolean) {
     setError(null);
     try {
-      await createBike.mutateAsync({ ownerUserId: user.userId, input: values, submit, actorUserId: user.userId });
+      const created = await createBike.mutateAsync({ ownerUserId: user.userId, input: values, submit, actorUserId: user.userId });
       if (submit) {
-        setDone({ name: values.name });
+        setDone({ name: values.name, photoPending: created.bike.photo.status === 'pending' });
       } else {
         toast.confirm('Draft saved. Finish it whenever you are ready.');
         navigate('/my-bikes');
@@ -49,9 +50,11 @@ export function RegisterBikePage() {
             <CheckCircle2 className="h-10 w-10 text-ok-500" aria-hidden="true" />
             <div>
               <h1 className="text-2xl font-semibold">“{done.name}” is with Protection Services</h1>
+              {done.photoPending && <Badge className="mt-2" variant="tag-ready">Bike photo pending approval</Badge>}
               <p className="prose-measure mt-2 text-ink-600">
                 An administrator checks the details and programmes a tag for the frame. You will get a message here when
-                the tag is ready to collect, and the gate will start recognising the bike once the tag is fitted.
+                the tag is ready to collect, and the gate will start recognising the bike once the tag is fitted. The
+                submitted bike photo stays pending until an administrator approves it.
               </p>
             </div>
             <div className="flex gap-2">

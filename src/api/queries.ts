@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { AlarmStatus, BikeStatus, GateMode, NewPerson, Notification, PhotoTargetType } from '@/types';
+import type { AlarmStatus, BikeStatus, GateMode, NewPerson, Notification, PendingPhoto, PhotoTargetType } from '@/types';
 import { useAuth } from '@/auth/AuthContext';
 import { api, type BikeInput, type CrossingFilters, type ProfileDetailsInput } from './client';
 
@@ -303,11 +303,15 @@ export function useSubmitBikePhoto() {
 
 export function useApprovePhoto() {
   const refresh = useRefresh();
+  const client = useQueryClient();
   const { user, updateCurrentUser } = useAuth();
   return useMutation({
     mutationFn: (vars: { targetType: PhotoTargetType; entityId: string; adminUserId: string }) =>
       api.approvePhoto(vars.targetType, vars.entityId, vars.adminUserId),
     onSuccess: (result) => {
+      client.setQueryData<PendingPhoto[]>(keys.pendingPhotos, (current) =>
+        current?.filter((item) => item.targetType !== result.targetType || item.entityId !== result.entityId),
+      );
       if (result.targetType === 'user' && user?.userId === result.entityId) {
         updateCurrentUser({ ...user, photo: result.photo, photoPath: result.photo.live });
       }
@@ -318,11 +322,15 @@ export function useApprovePhoto() {
 
 export function useRejectPhoto() {
   const refresh = useRefresh();
+  const client = useQueryClient();
   const { user, updateCurrentUser } = useAuth();
   return useMutation({
     mutationFn: (vars: { targetType: PhotoTargetType; entityId: string; reason: string; adminUserId: string }) =>
       api.rejectPhoto(vars.targetType, vars.entityId, vars.reason, vars.adminUserId),
     onSuccess: (result) => {
+      client.setQueryData<PendingPhoto[]>(keys.pendingPhotos, (current) =>
+        current?.filter((item) => item.targetType !== result.targetType || item.entityId !== result.entityId),
+      );
       if (result.targetType === 'user' && user?.userId === result.entityId) {
         updateCurrentUser({ ...user, photo: result.photo, photoPath: result.photo.live });
       }

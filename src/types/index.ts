@@ -193,7 +193,7 @@ export interface Notification {
   body: string;
   createdAt: string;
   read: boolean;
-  kind: 'tag_ready' | 'registration' | 'security' | 'system';
+  kind: 'tag_ready' | 'registration' | 'security' | 'photo_review' | 'system';
 }
 
 export interface Session {
