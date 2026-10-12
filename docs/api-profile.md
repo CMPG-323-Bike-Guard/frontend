@@ -57,7 +57,7 @@ Request:
 
 Response: `{ "success": true }`.
 
-Errors: `400 current_password_required` if the current password is missing; `400 invalid_password` if the new password is shorter than 8 characters; `401 unauthenticated`; `403 forbidden` if the caller is not updating their own account. The backend must verify the current password and store only a secure password hash. The mock requires a non-empty current password and validates the new password length, but deliberately does not store, compare, or log either value.
+Errors: `400 current_password_required` if the current password is missing; `400 invalid_current_password` if it is wrong, using the documented `{ "code": string, "message": string, "field"?: string }` error shape; `400 invalid_password` if the new password is shorter than 8 characters; `401 unauthenticated`; `403 forbidden` if the caller is not updating their own account. The backend must verify the current password and store only a secure password hash. The mock requires a non-empty current password and validates the new password length, but deliberately does not store, compare, or log either value.
 
 ### Submit own profile picture
 

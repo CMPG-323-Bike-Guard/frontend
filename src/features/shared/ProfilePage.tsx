@@ -84,6 +84,7 @@ export function ProfilePage() {
     email: user.email,
     phone: user.phone ?? '',
   });
+  const [detailsDirty, setDetailsDirty] = useState(false);
   const [detailErrors, setDetailErrors] = useState<FieldErrors<DetailsField>>({});
   const [detailError, setDetailError] = useState<string | null>(null);
   const [photoCandidate, setPhotoCandidate] = useState<string | null>(null);
@@ -98,11 +99,14 @@ export function ProfilePage() {
   });
 
   useEffect(() => {
-    setDetails({ name: user.name, email: user.email, phone: user.phone ?? '' });
-  }, [user.name, user.email, user.phone]);
+    if (!detailsDirty) {
+      setDetails({ name: user.name, email: user.email, phone: user.phone ?? '' });
+    }
+  }, [user.name, user.email, user.phone, detailsDirty]);
 
   function updateDetail(field: DetailsField, value: string) {
     setDetails((current) => ({ ...current, [field]: value }));
+    setDetailsDirty(true);
     setDetailErrors((current) => ({ ...current, [field]: undefined }));
     setDetailError(null);
   }
@@ -115,10 +119,12 @@ export function ProfilePage() {
     if (hasErrors(errors)) return;
 
     try {
-      await updateDetails.mutateAsync({
+      const savedUser = await updateDetails.mutateAsync({
         actorUserId: user.userId,
         input: { name: details.name, email: details.email, phone: details.phone },
       });
+      setDetails({ name: savedUser.name, email: savedUser.email, phone: savedUser.phone ?? '' });
+      setDetailsDirty(false);
       toast.confirm('Your details were updated.');
     } catch (error) {
       setDetailError(errorMessage(error, 'Your details could not be updated.'));
@@ -297,6 +303,7 @@ export function ProfilePage() {
                     autoComplete="name"
                     value={details.name}
                     onChange={(event) => updateDetail('name', event.target.value)}
+                    disabled={updateDetails.isPending}
                     required
                     maxLength={80}
                     invalid={invalid}
@@ -314,6 +321,7 @@ export function ProfilePage() {
                     autoComplete="email"
                     value={details.email}
                     onChange={(event) => updateDetail('email', event.target.value)}
+                    disabled={updateDetails.isPending}
                     required
                     maxLength={254}
                     invalid={invalid}
@@ -331,6 +339,7 @@ export function ProfilePage() {
                     autoComplete="tel"
                     value={details.phone}
                     onChange={(event) => updateDetail('phone', event.target.value)}
+                    disabled={updateDetails.isPending}
                     maxLength={30}
                     invalid={invalid}
                     aria-invalid={invalid || undefined}
@@ -339,14 +348,14 @@ export function ProfilePage() {
                 )}
               </Field>
               <Field label="Student or staff number">
-                {({ id }) => <Input id={id} value={user.studentStaffNumber} readOnly aria-readonly="true" />}
+                {({ id }) => <Input id={id} value={user.studentStaffNumber} readOnly disabled={updateDetails.isPending} aria-readonly="true" />}
               </Field>
               <Field label="Role">
-                {({ id }) => <Input id={id} value={ROLE_LABEL[user.role]} readOnly aria-readonly="true" />}
+                {({ id }) => <Input id={id} value={ROLE_LABEL[user.role]} readOnly disabled={updateDetails.isPending} aria-readonly="true" />}
               </Field>
             </div>
             <div>
-              <Button type="submit" loading={updateDetails.isPending}>Save details</Button>
+              <Button type="submit" loading={updateDetails.isPending} disabled={updateDetails.isPending}>Save details</Button>
             </div>
           </form>
         </CardBody>
