@@ -7,6 +7,7 @@ import type {
   GateEvent,
   MismatchReason,
   Notification,
+  PhotoModeration,
   RfidTag,
   User,
 } from '@/types';
@@ -39,24 +40,65 @@ function iso(offsetMs: number): string {
   return new Date(Date.now() - offsetMs).toISOString();
 }
 
+function userPhoto(userId: string, name: string): PhotoModeration {
+  const live = avatarFor(name);
+  if (userId === 'u-102') {
+    return {
+      live,
+      pending: avatarFor('Pieter updated photo'),
+      status: 'pending',
+      rejectionReason: null,
+      reviewedBy: null,
+      reviewedAt: null,
+      submittedAt: iso(2 * 60 * 60_000),
+    };
+  }
+  if (userId === 'u-103') {
+    return {
+      live,
+      pending: avatarFor('Lerato rejected photo'),
+      status: 'rejected',
+      rejectionReason: 'Please upload a clear, front-facing photo.',
+      reviewedBy: 'u-301',
+      reviewedAt: iso(DAY),
+      submittedAt: iso(2 * DAY),
+    };
+  }
+  return {
+    live,
+    pending: null,
+    status: 'approved',
+    rejectionReason: null,
+    reviewedBy: 'u-301',
+    reviewedAt: iso(30 * DAY),
+    submittedAt: iso(31 * DAY),
+  };
+}
+
 function student(
   id: string,
   number: string,
   name: string,
   email: string,
 ): User {
+  const photo = userPhoto(id, name);
   return {
     userId: id,
     studentStaffNumber: number,
     name,
     role: 'student',
     email,
-    photoPath: avatarFor(name),
+    phone: null,
+    photo,
+    photoPath: photo.live,
     accountStatus: 'active',
   };
 }
 
 export function buildSeed() {
+  const johanPhoto = userPhoto('u-201', 'Johan Prinsloo');
+  const gracePhoto = userPhoto('u-202', 'Grace Mahlangu');
+  const riaanPhoto = userPhoto('u-301', 'Riaan Coetzee');
   const users: User[] = [
     student('u-101', '41002381', 'Thandi Mokoena', '41002381@mynwu.ac.za'),
     student('u-102', '41118742', 'Pieter van Wyk', '41118742@mynwu.ac.za'),
@@ -72,7 +114,9 @@ export function buildSeed() {
       name: 'Johan Prinsloo',
       role: 'guard',
       email: 'j.prinsloo@nwu.ac.za',
-      photoPath: avatarFor('Johan Prinsloo'),
+      phone: null,
+      photo: johanPhoto,
+      photoPath: johanPhoto.live,
       accountStatus: 'active',
     },
     {
@@ -81,7 +125,9 @@ export function buildSeed() {
       name: 'Grace Mahlangu',
       role: 'guard',
       email: 'g.mahlangu@nwu.ac.za',
-      photoPath: avatarFor('Grace Mahlangu'),
+      phone: null,
+      photo: gracePhoto,
+      photoPath: gracePhoto.live,
       accountStatus: 'active',
     },
     {
@@ -90,7 +136,9 @@ export function buildSeed() {
       name: 'Riaan Coetzee',
       role: 'admin',
       email: 'r.coetzee@nwu.ac.za',
-      photoPath: avatarFor('Riaan Coetzee'),
+      phone: null,
+      photo: riaanPhoto,
+      photoPath: riaanPhoto.live,
       accountStatus: 'active',
     },
     
@@ -131,20 +179,43 @@ export function buildSeed() {
     { id: 'b-14', owner: 'u-105', name: 'Training bike', make: 'Fuji Sportif', colour: 'Yellow', status: 'draft', days: 0 },
   ];
 
-  const bikes: Bike[] = bikeSpecs.map((spec) => ({
-    bikeId: spec.id,
-    ownerUserId: spec.owner,
-    name: spec.name,
-    makeModel: spec.make,
-    colour: spec.colour,
-    photoPath: bikePhotoFor(spec.colour, spec.make),
-    status: spec.status,
-    submittedAt: iso(spec.days * DAY),
-    reviewedAt: ['active', 'tag_pending', 'rejected', 'removed'].includes(spec.status)
-      ? iso(Math.max(0, spec.days - 1) * DAY)
-      : null,
-    reviewNote: spec.note ?? null,
-  }));
+  const bikes: Bike[] = bikeSpecs.map((spec) => {
+    const live = bikePhotoFor(spec.colour, spec.make);
+    const photo: PhotoModeration = spec.id === 'b-03'
+      ? {
+          live,
+          pending: bikePhotoFor('Silver', 'Silverback updated photo'),
+          status: 'pending',
+          rejectionReason: null,
+          reviewedBy: null,
+          reviewedAt: null,
+          submittedAt: iso(3 * 60 * 60_000),
+        }
+      : {
+          live,
+          pending: null,
+          status: 'approved',
+          rejectionReason: null,
+          reviewedBy: 'u-301',
+          reviewedAt: iso(30 * DAY),
+          submittedAt: iso(31 * DAY),
+        };
+    return {
+      bikeId: spec.id,
+      ownerUserId: spec.owner,
+      name: spec.name,
+      makeModel: spec.make,
+      colour: spec.colour,
+      photo,
+      photoPath: photo.live,
+      status: spec.status,
+      submittedAt: iso(spec.days * DAY),
+      reviewedAt: ['active', 'tag_pending', 'rejected', 'removed'].includes(spec.status)
+        ? iso(Math.max(0, spec.days - 1) * DAY)
+        : null,
+      reviewNote: spec.note ?? null,
+    };
+  });
 
   const tags: RfidTag[] = [
     { tagId: 't-01', bikeId: 'b-01', tagRef: 'BG-4A19C2', status: 'active', issuedAt: iso(45 * DAY), deactivatedAt: null, replacesTagId: null },

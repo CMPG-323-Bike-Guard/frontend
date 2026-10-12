@@ -9,14 +9,17 @@ import type {
   GateMode,
   NewPerson,
   Notification,
+  PendingPhoto,
+  PhotoReviewResult,
+  PhotoTargetType,
   ReportBundle,
   Session,
   User,
 } from '@/types';
-import { mockApi, MockApiError, type BikeInput, type CrossingFilters } from '@/mocks/server';
+import { mockApi, MockApiError, type BikeInput, type CrossingFilters, type ProfileDetailsInput } from '@/mocks/server';
 import { API_BASE_URL, API_MODE, endpoints, TOKEN_STORAGE_KEY } from './endpoints';
 
-export type { BikeInput, CrossingFilters };
+export type { BikeInput, CrossingFilters, ProfileDetailsInput };
 
 export class ApiError extends Error {
   code: string;
@@ -100,6 +103,19 @@ const liveApi = {
   getBike: (bikeId: string) => request<BikeView>(endpoints.bikes.detail(bikeId)),
   createBike: (ownerUserId: string, input: BikeInput, submit: boolean, _actorUserId: string) =>
     post<BikeView>(endpoints.bikes.create, { ownerUserId, ...input, submit }),
+  updateOwnDetails: (_actorUserId: string, input: ProfileDetailsInput) =>
+    patch<User>(endpoints.users.me, input),
+  changeOwnPassword: (_actorUserId: string, currentPassword: string, newPassword: string) =>
+    post<{ success: true }>(endpoints.users.password, { currentPassword, newPassword }),
+  submitProfilePhoto: (_actorUserId: string, dataUrl: string) =>
+    post<User>(endpoints.users.profilePhoto, { photoDataUrl: dataUrl }),
+  submitBikePhoto: (bikeId: string, _actorUserId: string, dataUrl: string) =>
+    post<BikeView>(endpoints.photos.bike(bikeId), { photoDataUrl: dataUrl }),
+  listPendingPhotos: (_adminUserId: string) => request<PendingPhoto[]>(endpoints.photos.pending),
+  approvePhoto: (targetType: PhotoTargetType, entityId: string, _adminUserId: string) =>
+    post<PhotoReviewResult>(endpoints.photos.approve(targetType, entityId)),
+  rejectPhoto: (targetType: PhotoTargetType, entityId: string, reason: string, _adminUserId: string) =>
+    post<PhotoReviewResult>(endpoints.photos.reject(targetType, entityId), { reason }),
   updateBike: (bikeId: string, input: Partial<BikeInput>, _actorUserId: string) =>
     patch<BikeView>(endpoints.bikes.detail(bikeId), input),
   submitBike: (bikeId: string, _actorUserId: string) => post<BikeView>(endpoints.bikes.submit(bikeId)),

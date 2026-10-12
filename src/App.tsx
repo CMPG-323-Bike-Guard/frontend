@@ -5,13 +5,14 @@ import { AuthProvider, useAuth } from '@/auth/AuthContext';
 import { ProtectedRoute } from '@/auth/ProtectedRoute';
 import { AppShell } from '@/components/layout/AppShell';
 import { ToastProvider } from '@/components/ui/Toast';
-import { ROLE_HOME } from '@/lib/constants';
+import { PROFILE_PATH, ROLE_HOME } from '@/lib/constants';
 import { FullPageSpinner, SkeletonRows } from '@/components/ui/Spinner';
 
 import { SignInPage } from '@/features/shared/SignInPage';
 import { NotFoundPage } from '@/features/shared/NotFoundPage';
 import { NoAccessPage } from '@/features/shared/NoAccessPage';
 import { CrossingLogPage } from '@/features/shared/CrossingLogPage';
+import { ProfilePage } from '@/features/shared/ProfilePage';
 
 import { MyBikesPage } from '@/features/student/MyBikesPage';
 import { RegisterBikePage } from '@/features/student/RegisterBikePage';
@@ -58,6 +59,8 @@ export default function App() {
           {/* Protected application */}
           <Route element={<ProtectedRoute />}>
             <Route element={<AppShell />}>
+
+              <Route path={PROFILE_PATH} element={<ProfilePage />} />
 
               {/* Home */}
               <Route path="/" element={<RoleHome />} />

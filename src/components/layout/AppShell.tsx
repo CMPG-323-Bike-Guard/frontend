@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { LogOut, Menu, X } from 'lucide-react';
 import { useAuth } from '@/auth/AuthContext';
-import { INSTITUTION, ROLE_LABEL } from '@/lib/constants';
+import { INSTITUTION, PROFILE_PATH, ROLE_LABEL } from '@/lib/constants';
 import { useNotifications } from '@/api/queries';
 import { cx } from '@/lib/cx';
 import { Avatar } from '@/components/ui/Avatar';
@@ -121,13 +121,22 @@ export function AppShell() {
           <div className="mt-7 flex-1">{nav}</div>
 
           <div className="border-t border-white/20 pt-3">
-            <div className="flex items-center gap-3 px-1 py-2">
-              <Avatar name={user.name} src={user.photoPath} size="sm" className="bg-white/15 text-white" />
+            <NavLink
+              to={PROFILE_PATH}
+              aria-label={`Open your profile, ${user.name}`}
+              className={({ isActive }) =>
+                cx(
+                  'flex cursor-pointer items-center gap-3 rounded-control px-1 py-2 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white',
+                  isActive ? 'bg-white/15 text-white' : 'hover:bg-white/10',
+                )
+              }
+            >
+              <Avatar name={user.name} src={user.photo.live} size="sm" className="bg-white/15 text-white" />
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold text-white">{user.name}</p>
                 <p className="truncate text-xs text-white/80">{ROLE_LABEL[user.role]}</p>
               </div>
-            </div>
+            </NavLink>
             <button
               type="button"
               onClick={signOut}

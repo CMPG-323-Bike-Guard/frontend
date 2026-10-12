@@ -13,6 +13,10 @@ import type {
   MismatchReason,
   NewPerson,
   Notification,
+  PendingPhoto,
+  PhotoModeration,
+  PhotoReviewResult,
+  PhotoTargetType,
   PermissionView,
   ReportBundle,
   RepeatMismatchRow,
@@ -23,6 +27,7 @@ import type {
 } from '@/types';
 import { buildSeed, type SeedData } from './seed';
 import { bikePhotoFor } from './media';
+import { PHOTO_ACCEPTED_TYPES, PHOTO_MAX_BYTES } from '@/lib/constants';
 
 /**
  * Mock service.
@@ -302,6 +307,85 @@ export interface BikeInput {
   photoDataUrl: string | null;
 }
 
+export interface ProfileDetailsInput {
+  name: string;
+  email: string;
+  phone: string;
+}
+
+function requireActor(userId: string) {
+  const actor = userById(userId);
+  if (!actor) throw new MockApiError('unauthenticated', 'Sign in before making this change.');
+  if (actor.accountStatus !== 'active') {
+    throw new MockApiError('account_suspended', 'This account is suspended.');
+  }
+  return actor;
+}
+
+function requireSelf(actorUserId: string, ownerUserId: string) {
+  requireActor(actorUserId);
+  if (actorUserId !== ownerUserId) {
+    throw new MockApiError('forbidden', 'You can only update your own details.');
+  }
+}
+
+function requireAdmin(adminUserId: string) {
+  const admin = requireActor(adminUserId);
+  if (admin.role !== 'admin') throw new MockApiError('forbidden', 'Only admins can review photos.');
+  return admin;
+}
+
+function validatePhotoDataUrl(dataUrl: string) {
+  if (typeof dataUrl !== 'string') {
+    throw new MockApiError('invalid_photo', 'Upload a JPG, PNG or WebP image.', 'photoDataUrl');
+  }
+  const match = /^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/]*={0,2})$/.exec(dataUrl);
+  if (!match || !PHOTO_ACCEPTED_TYPES.includes(match[1])) {
+    throw new MockApiError('invalid_file_type', 'Use a JPG, PNG or WebP image.', 'photoDataUrl');
+  }
+  const encoded = match[2];
+  if (!encoded || encoded.length % 4 !== 0) {
+    throw new MockApiError('invalid_photo', 'The image file is empty or invalid.', 'photoDataUrl');
+  }
+  const padding = encoded.endsWith('==') ? 2 : encoded.endsWith('=') ? 1 : 0;
+  const byteLength = Math.floor((encoded.length * 3) / 4) - padding;
+  if (byteLength > PHOTO_MAX_BYTES) {
+    throw new MockApiError('file_too_large', 'The image must be 5 MB or smaller.', 'photoDataUrl');
+  }
+  let bytes: Uint8Array;
+  try {
+    bytes = Uint8Array.from(atob(encoded), (character) => character.charCodeAt(0));
+  } catch {
+    throw new MockApiError('invalid_photo', 'The image file is empty or invalid.', 'photoDataUrl');
+  }
+  const isJpeg = bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
+  const isPng = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]
+    .every((byte, index) => bytes[index] === byte);
+  const isWebp = bytes.length >= 12 &&
+    String.fromCharCode(...bytes.slice(0, 4)) === 'RIFF' &&
+    String.fromCharCode(...bytes.slice(8, 12)) === 'WEBP';
+  const matchesType = match[1] === 'image/jpeg' ? isJpeg
+    : match[1] === 'image/png' ? isPng
+      : isWebp;
+  if (!matchesType) {
+    throw new MockApiError('invalid_file_type', 'The image content must match its JPG, PNG or WebP type.', 'photoDataUrl');
+  }
+}
+
+function setPendingPhoto(photo: PhotoModeration, dataUrl: string) {
+  validatePhotoDataUrl(dataUrl);
+  photo.pending = dataUrl;
+  photo.status = 'pending';
+  photo.rejectionReason = null;
+  photo.reviewedBy = null;
+  photo.reviewedAt = null;
+  photo.submittedAt = nowIso();
+}
+
+function photoReviewResult(targetType: PhotoTargetType, entityId: string, photo: PhotoModeration): PhotoReviewResult {
+  return { targetType, entityId, photo };
+}
+
 export const mockApi = {
   /**
    * There is no real backend or password store yet, so this only checks
@@ -327,6 +411,71 @@ export const mockApi = {
     const user = userById(userId);
     if (!user) throw new MockApiError('unauthenticated', 'Your session has expired. Sign in again.');
     return { token, user };
+  },
+
+  async updateOwnDetails(actorUserId: string, input: ProfileDetailsInput): Promise<User> {
+    await latency();
+    const user = userById(actorUserId);
+    if (!user) throw new MockApiError('unauthenticated', 'Sign in before making this change.');
+    requireSelf(actorUserId, user.userId);
+
+    const name = input.name.trim();
+    const email = input.email.trim().toLowerCase();
+    const phone = input.phone.trim();
+    if (name.length < 2 || name.length > 80) {
+      throw new MockApiError('invalid_name', 'Name must be between 2 and 80 characters.', 'name');
+    }
+    if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      throw new MockApiError('invalid_email', 'Enter a valid email address.', 'email');
+    }
+    if (phone.length > 30 || (phone && !/^\+?[\d\s().-]{7,30}$/.test(phone))) {
+      throw new MockApiError('invalid_phone', 'Enter a valid phone number.', 'phone');
+    }
+    if (db.users.some((item) => item.userId !== user.userId && item.email.toLowerCase() === email)) {
+      throw new MockApiError('conflict', 'That email address is already in use.', 'email');
+    }
+
+    user.name = name;
+    user.email = email;
+    user.phone = phone || null;
+    record(actorUserId, 'profile.updated', 'user', user.userId, 'Name, email, and phone updated.');
+    return user;
+  },
+
+  async changeOwnPassword(actorUserId: string, currentPassword: string, newPassword: string): Promise<{ success: true }> {
+    await latency();
+    const user = userById(actorUserId);
+    if (!user) throw new MockApiError('unauthenticated', 'Sign in before making this change.');
+    requireSelf(actorUserId, user.userId);
+    if (!currentPassword) {
+      throw new MockApiError('current_password_required', 'Enter your current password.', 'currentPassword');
+    }
+    if (typeof newPassword !== 'string' || newPassword.length < 8) {
+      throw new MockApiError('invalid_password', 'Passwords must be at least 8 characters.', 'newPassword');
+    }
+    // The mock intentionally neither retains nor records password values.
+    record(actorUserId, 'profile.password_changed', 'user', user.userId, 'Password change requested.');
+    return { success: true };
+  },
+
+  async submitProfilePhoto(actorUserId: string, dataUrl: string): Promise<User> {
+    await latency();
+    const user = userById(actorUserId);
+    if (!user) throw new MockApiError('unauthenticated', 'Sign in before making this change.');
+    requireSelf(actorUserId, user.userId);
+    setPendingPhoto(user.photo, dataUrl);
+    record(actorUserId, 'profile.photo_submitted', 'user', user.userId, 'Profile photo submitted for review.');
+    return user;
+  },
+
+  async submitBikePhoto(bikeId: string, actorUserId: string, dataUrl: string): Promise<BikeView> {
+    await latency();
+    const bike = bikeById(bikeId);
+    if (!bike) throw new MockApiError('not_found', 'That bike no longer exists.');
+    requireSelf(actorUserId, bike.ownerUserId);
+    setPendingPhoto(bike.photo, dataUrl);
+    record(actorUserId, 'bike.photo_submitted', 'bike', bike.bikeId, 'Bike photo submitted for review.');
+    return toBikeView(bike);
   },
 
   // ---- Student -----------------------------------------------------------
@@ -359,13 +508,26 @@ export const mockApi = {
 
   
 
+    const livePhoto = bikePhotoFor(input.colour, input.makeModel);
+    const photo: PhotoModeration = {
+      live: livePhoto,
+      pending: null,
+      status: 'approved',
+      rejectionReason: null,
+      reviewedBy: null,
+      reviewedAt: null,
+      submittedAt: null,
+    };
+    if (input.photoDataUrl) setPendingPhoto(photo, input.photoDataUrl);
+
     const bike: Bike = {
       bikeId: newId('b'),
       ownerUserId,
       name: input.name.trim(),
       makeModel: input.makeModel.trim(),
       colour: input.colour.trim(),
-      photoPath: input.photoDataUrl ?? bikePhotoFor(input.colour, input.makeModel),
+      photo,
+      photoPath: photo.live,
       status: submit ? 'pending_approval' : 'draft',
       submittedAt: nowIso(),
       reviewedAt: null,
@@ -390,7 +552,10 @@ export const mockApi = {
     if (input.name !== undefined) bike.name = input.name.trim();
     if (input.makeModel !== undefined) bike.makeModel = input.makeModel.trim();
     if (input.colour !== undefined) bike.colour = input.colour.trim();
-    if (input.photoDataUrl) bike.photoPath = input.photoDataUrl;
+    if (input.photoDataUrl) {
+      requireSelf(actorUserId, bike.ownerUserId);
+      setPendingPhoto(bike.photo, input.photoDataUrl);
+    }
     record(actorUserId, 'registration.updated', 'bike', bike.bikeId, `Details updated for ${bike.name}.`);
     return toBikeView(bike);
   },
@@ -629,6 +794,82 @@ export const mockApi = {
       .map(toBikeView);
   },
 
+  async listPendingPhotos(adminUserId: string): Promise<PendingPhoto[]> {
+    await latency();
+    requireAdmin(adminUserId);
+    const userPhotos: PendingPhoto[] = db.users
+      .filter((user) => user.photo.status === 'pending' && user.photo.pending)
+      .map((user) => ({
+        targetType: 'user',
+        entityId: user.userId,
+        ownerUserId: user.userId,
+        ownerName: user.name,
+        photo: user.photo,
+      }));
+    const bikePhotos: PendingPhoto[] = db.bikes
+      .filter((bike) => bike.photo.status === 'pending' && bike.photo.pending)
+      .map((bike) => ({
+        targetType: 'bike',
+        entityId: bike.bikeId,
+        ownerUserId: bike.ownerUserId,
+        ownerName: userById(bike.ownerUserId)?.name ?? 'Unknown user',
+        photo: bike.photo,
+      }));
+    return [...userPhotos, ...bikePhotos].sort((left, right) =>
+      (right.photo.submittedAt ?? '').localeCompare(left.photo.submittedAt ?? ''),
+    );
+  },
+
+  async approvePhoto(
+    targetType: PhotoTargetType,
+    entityId: string,
+    adminUserId: string,
+  ): Promise<PhotoReviewResult> {
+    await latency();
+    requireAdmin(adminUserId);
+    const target = targetType === 'user' ? userById(entityId) : bikeById(entityId);
+    if (!target) throw new MockApiError('not_found', 'That photo owner or bike no longer exists.');
+    if (target.photo.status !== 'pending' || !target.photo.pending) {
+      throw new MockApiError('not_pending', 'That photo is not awaiting review.');
+    }
+    target.photo.live = target.photo.pending;
+    target.photo.pending = null;
+    target.photo.status = 'approved';
+    target.photo.rejectionReason = null;
+    target.photo.reviewedBy = adminUserId;
+    target.photo.reviewedAt = nowIso();
+    target.photo.submittedAt ??= target.photo.reviewedAt;
+    target.photoPath = target.photo.live;
+    record(adminUserId, 'photo.approved', targetType, entityId, `${targetType} photo approved.`);
+    return photoReviewResult(targetType, entityId, target.photo);
+  },
+
+  async rejectPhoto(
+    targetType: PhotoTargetType,
+    entityId: string,
+    reason: string,
+    adminUserId: string,
+  ): Promise<PhotoReviewResult> {
+    await latency();
+    requireAdmin(adminUserId);
+    const target = targetType === 'user' ? userById(entityId) : bikeById(entityId);
+    if (!target) throw new MockApiError('not_found', 'That photo owner or bike no longer exists.');
+    if (target.photo.status !== 'pending' || !target.photo.pending) {
+      throw new MockApiError('not_pending', 'That photo is not awaiting review.');
+    }
+    const rejectionReason = reason.trim();
+    if (!rejectionReason) {
+      throw new MockApiError('reason_required', 'A rejection reason is required.', 'reason');
+    }
+    target.photo.status = 'rejected';
+    target.photo.rejectionReason = rejectionReason;
+    target.photo.reviewedBy = adminUserId;
+    target.photo.reviewedAt = nowIso();
+    target.photoPath = target.photo.live;
+    record(adminUserId, 'photo.rejected', targetType, entityId, `Photo rejected: ${rejectionReason}`);
+    return photoReviewResult(targetType, entityId, target.photo);
+  },
+
   /** FR-ADM-02 + flow chart 5.2: approve, allocate a tag, tell the student. */
   async approveRegistration(bikeId: string, tagRef: string, adminUserId: string): Promise<BikeView> {
     await latency();
@@ -771,6 +1012,16 @@ export const mockApi = {
       name: person.name.trim(),
       role: person.role,
       email,
+      phone: null,
+      photo: {
+        live: null,
+        pending: null,
+        status: 'none',
+        rejectionReason: null,
+        reviewedBy: null,
+        reviewedAt: null,
+        submittedAt: null,
+      },
       photoPath: null,
       accountStatus: 'active',
     };

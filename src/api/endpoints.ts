@@ -57,9 +57,18 @@ export const endpoints = {
   users: {
     list: '/users',
     create: '/users',
+    me: '/users/me',
+    password: '/users/me/password',
+    profilePhoto: '/users/me/photo',
     byNumber: (studentNumber: string) => `/users/lookup/${studentNumber}`,
     notifications: (userId: string) => `/users/${userId}/notifications`,
     notification: (notificationId: string) => `/notifications/${notificationId}`,
+  },
+  photos: {
+    pending: '/photos/pending',
+    approve: (targetType: 'user' | 'bike', entityId: string) => `/photos/${targetType}/${entityId}/approve`,
+    reject: (targetType: 'user' | 'bike', entityId: string) => `/photos/${targetType}/${entityId}/reject`,
+    bike: (bikeId: string) => `/bikes/${bikeId}/photo`,
   },
   reporting: {
     stats: '/reports/stats',

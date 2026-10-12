@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { AlarmStatus, BikeStatus, GateMode, NewPerson, Notification } from '@/types';
-import { api, type BikeInput, type CrossingFilters } from './client';
+import type { AlarmStatus, BikeStatus, GateMode, NewPerson, Notification, PhotoTargetType } from '@/types';
+import { useAuth } from '@/auth/AuthContext';
+import { api, type BikeInput, type CrossingFilters, type ProfileDetailsInput } from './client';
 
 /** Query keys are namespaced so a mutation can invalidate exactly what changed. */
 export const keys = {
@@ -14,6 +15,7 @@ export const keys = {
   stats: ['stats'] as const,
   reports: (days: number) => ['reports', days] as const,
   users: (role?: string) => ['users', role ?? 'all'] as const,
+  pendingPhotos: ['photos', 'pending'] as const,
   audit: ['audit'] as const,
 };
 
@@ -63,6 +65,14 @@ export function useReports(days: number) {
 
 export function useAudit() {
   return useQuery({ queryKey: keys.audit, queryFn: () => api.listAudit() });
+}
+
+export function usePendingPhotos(adminUserId?: string) {
+  return useQuery({
+    queryKey: keys.pendingPhotos,
+    queryFn: () => api.listPendingPhotos(adminUserId!),
+    enabled: Boolean(adminUserId),
+  });
 }
 
 /** Broad invalidation after a write. Cheap here, and keeps every screen honest. */
@@ -243,6 +253,80 @@ export function useMarkNotificationRead() {
     },
     onSettled: () => {
       void client.invalidateQueries(notificationQueries);
+    },
+  });
+}
+
+export function useUpdateOwnDetails() {
+  const refresh = useRefresh();
+  const { updateCurrentUser } = useAuth();
+  return useMutation({
+    mutationFn: (vars: { actorUserId: string; input: ProfileDetailsInput }) =>
+      api.updateOwnDetails(vars.actorUserId, vars.input),
+    onSuccess: (user) => {
+      updateCurrentUser(user);
+      refresh();
+    },
+  });
+}
+
+export function useChangeOwnPassword() {
+  const refresh = useRefresh();
+  return useMutation({
+    mutationFn: (vars: { actorUserId: string; currentPassword: string; newPassword: string }) =>
+      api.changeOwnPassword(vars.actorUserId, vars.currentPassword, vars.newPassword),
+    onSuccess: refresh,
+  });
+}
+
+export function useSubmitProfilePhoto() {
+  const refresh = useRefresh();
+  const { updateCurrentUser } = useAuth();
+  return useMutation({
+    mutationFn: (vars: { actorUserId: string; photoDataUrl: string }) =>
+      api.submitProfilePhoto(vars.actorUserId, vars.photoDataUrl),
+    onSuccess: (user) => {
+      updateCurrentUser(user);
+      refresh();
+    },
+  });
+}
+
+export function useSubmitBikePhoto() {
+  const refresh = useRefresh();
+  return useMutation({
+    mutationFn: (vars: { bikeId: string; actorUserId: string; photoDataUrl: string }) =>
+      api.submitBikePhoto(vars.bikeId, vars.actorUserId, vars.photoDataUrl),
+    onSuccess: refresh,
+  });
+}
+
+export function useApprovePhoto() {
+  const refresh = useRefresh();
+  const { user, updateCurrentUser } = useAuth();
+  return useMutation({
+    mutationFn: (vars: { targetType: PhotoTargetType; entityId: string; adminUserId: string }) =>
+      api.approvePhoto(vars.targetType, vars.entityId, vars.adminUserId),
+    onSuccess: (result) => {
+      if (result.targetType === 'user' && user?.userId === result.entityId) {
+        updateCurrentUser({ ...user, photo: result.photo, photoPath: result.photo.live });
+      }
+      refresh();
+    },
+  });
+}
+
+export function useRejectPhoto() {
+  const refresh = useRefresh();
+  const { user, updateCurrentUser } = useAuth();
+  return useMutation({
+    mutationFn: (vars: { targetType: PhotoTargetType; entityId: string; reason: string; adminUserId: string }) =>
+      api.rejectPhoto(vars.targetType, vars.entityId, vars.reason, vars.adminUserId),
+    onSuccess: (result) => {
+      if (result.targetType === 'user' && user?.userId === result.entityId) {
+        updateCurrentUser({ ...user, photo: result.photo, photoPath: result.photo.live });
+      }
+      refresh();
     },
   });
 }

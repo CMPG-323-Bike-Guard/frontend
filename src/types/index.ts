@@ -8,6 +8,34 @@
 
 export type Role = 'student' | 'guard' | 'admin';
 
+export type PhotoStatus = 'none' | 'pending' | 'approved' | 'rejected';
+
+export interface PhotoModeration {
+  live: string | null;
+  pending: string | null;
+  status: PhotoStatus;
+  rejectionReason: string | null;
+  reviewedBy: string | null;
+  reviewedAt: string | null;
+  submittedAt: string | null;
+}
+
+export type PhotoTargetType = 'user' | 'bike';
+
+export interface PendingPhoto {
+  targetType: PhotoTargetType;
+  entityId: string;
+  ownerUserId: string;
+  ownerName: string;
+  photo: PhotoModeration;
+}
+
+export interface PhotoReviewResult {
+  targetType: PhotoTargetType;
+  entityId: string;
+  photo: PhotoModeration;
+}
+
 /** Account status on the users entity (Technical Specification 7.1). */
 export type AccountStatus = 'active' | 'suspended';
 
@@ -65,6 +93,9 @@ export interface User {
   name: string;
   role: Role;
   email: string;
+  phone: string | null;
+  photo: PhotoModeration;
+  /** Compatibility projection of photo.live for existing consumers. */
   photoPath: string | null;
   accountStatus: AccountStatus;
 }
@@ -75,6 +106,8 @@ export interface Bike {
   name: string;
   makeModel: string;
   colour: string;
+  photo: PhotoModeration;
+  /** Compatibility projection of photo.live for existing consumers. */
   photoPath: string | null;
   status: BikeStatus;
   submittedAt: string;
