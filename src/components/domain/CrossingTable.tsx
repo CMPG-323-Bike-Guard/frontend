@@ -34,7 +34,7 @@ export function CrossingTable({ rows, showGate = true }: { rows: CrossingView[];
               <span className="font-medium text-ink-900">{userName ?? 'Unidentified person'}</span>
               {studentStaffNumber && <span className="block text-xs text-ink-500">{studentStaffNumber}</span>}
             </Td>
-            <Td className="text-ink-700">{bikeName ?? (event.note ? event.note : ', ')}</Td>
+            <Td className="text-ink-700">{bikeName?.trim() || '—'}</Td>
             <Td className="text-ink-500">{event.studentNumber ?? ', '}</Td>
             <Td className="text-ink-500">{shortRef(event.tagRef)}</Td>
             <Td>

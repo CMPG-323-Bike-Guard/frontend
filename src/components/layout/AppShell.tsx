@@ -3,7 +3,7 @@ import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { LogOut, Menu, X } from 'lucide-react';
 import { useAuth } from '@/auth/AuthContext';
 import { INSTITUTION, PROFILE_PATH, ROLE_LABEL } from '@/lib/constants';
-import { useNotifications, usePendingPhotos } from '@/api/queries';
+import { useNotifications, usePendingPhotos, usePendingRegistrations } from '@/api/queries';
 import { cx } from '@/lib/cx';
 import { Avatar } from '@/components/ui/Avatar';
 import { Brand } from './Brand';
@@ -22,6 +22,7 @@ export function AppShell() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const notifications = useNotifications(user?.userId);
   const pendingPhotos = usePendingPhotos(user?.role === 'admin' ? user.userId : undefined);
+  const pendingRegistrations = usePendingRegistrations(user?.role === 'admin');
 
   useEffect(() => setDrawerOpen(false), [location.pathname]);
 
@@ -30,6 +31,7 @@ export function AppShell() {
   const isAdmin = user.role === 'admin';
   const unreadNotificationCount = (notifications.data ?? []).filter((notification) => !notification.read).length;
   const pendingPhotoCount = user.role === 'admin' ? pendingPhotos.data?.length ?? 0 : 0;
+  const pendingRegistrationCount = isAdmin ? pendingRegistrations.data?.length ?? 0 : 0;
   const homePath = groups[0].items[0].to;
   const firstLabeledGroupIndex = groups.findIndex((group) => group.label);
 
@@ -37,6 +39,7 @@ export function AppShell() {
     const Icon = item.icon;
     const showUnreadCount = item.to === '/notifications' && unreadNotificationCount > 0;
     const showPendingPhotoCount = item.to === '/admin/photo-reviews' && pendingPhotoCount > 0;
+    const showPendingRegistrationCount = item.to === '/admin/registrations' && pendingRegistrationCount > 0;
     return (
       <li key={item.to}>
         <NavLink
@@ -47,7 +50,9 @@ export function AppShell() {
               ? `${item.label}, ${unreadNotificationCount} unread notification${unreadNotificationCount === 1 ? '' : 's'}`
               : showPendingPhotoCount
                 ? `${item.label}, ${pendingPhotoCount} pending photo${pendingPhotoCount === 1 ? '' : 's'}`
-                : undefined
+                  : showPendingRegistrationCount
+                    ? `${pendingRegistrationCount} registration${pendingRegistrationCount === 1 ? '' : 's'} waiting for review`
+                    : undefined
           }
           className={({ isActive }) =>
             cx(
@@ -57,7 +62,7 @@ export function AppShell() {
             )
           }
         >
-          {showUnreadCount || showPendingPhotoCount ? (
+          {showUnreadCount || showPendingPhotoCount || showPendingRegistrationCount ? (
             <>
               <span className="flex min-w-0 items-center gap-3">
                 <Icon className="h-[18px] w-[18px] shrink-0" aria-hidden="true" />
@@ -66,7 +71,9 @@ export function AppShell() {
               <span className="ml-auto shrink-0 font-bold text-sidebar-unread">
                 {showUnreadCount
                   ? unreadNotificationCount > 99 ? '99+' : unreadNotificationCount
-                  : pendingPhotoCount > 99 ? '99+' : pendingPhotoCount}
+                  : showPendingPhotoCount
+                    ? pendingPhotoCount > 99 ? '99+' : pendingPhotoCount
+                    : pendingRegistrationCount > 99 ? '99+' : pendingRegistrationCount}
               </span>
             </>
           ) : (

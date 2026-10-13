@@ -5,6 +5,7 @@ import { useCurrentUser } from '@/auth/AuthContext';
 import {
   useApproveRegistration,
   useCreateBike,
+  usePendingRegistrations,
   useRegistrations,
   useRejectRegistration,
 } from '@/api/queries';
@@ -38,6 +39,7 @@ export function RegistrationsPage() {
 
   const [filter, setFilter] = useState<Filter>('pending_approval');
   const registrations = useRegistrations(filter as BikeStatus);
+  const pendingRegistrations = usePendingRegistrations();
   const approve = useApproveRegistration();
   const reject = useRejectRegistration();
   const createBike = useCreateBike();
@@ -56,6 +58,7 @@ export function RegistrationsPage() {
   const [onBehalfError, setOnBehalfError] = useState<string | null>(null);
 
   const counts = useMemo(() => registrations.data?.length ?? 0, [registrations.data]);
+  const pendingCount = pendingRegistrations.data?.length ?? 0;
 
   async function submitApproval() {
     if (!approving) return;
@@ -130,7 +133,10 @@ export function RegistrationsPage() {
         value={filter}
         onChange={setFilter}
         options={[
-          { value: 'pending_approval', label: 'Waiting for review' },
+          {
+            value: 'pending_approval',
+            label: pendingCount > 0 ? `Waiting for review (${pendingCount})` : 'Waiting for review',
+          },
           { value: 'tag_pending', label: 'Tag to collect' },
           { value: 'active', label: 'Protected' },
           { value: 'rejected', label: 'Sent back' },

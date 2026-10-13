@@ -47,6 +47,14 @@ export function useRegistrations(status?: BikeStatus) {
   return useQuery({ queryKey: keys.registrations(status), queryFn: () => api.listRegistrations(status) });
 }
 
+export function usePendingRegistrations(enabled = true) {
+  return useQuery({
+    queryKey: keys.registrations('pending_approval'),
+    queryFn: () => api.listRegistrations('pending_approval'),
+    enabled,
+  });
+}
+
 export function useNotifications(userId?: string) {
   return useQuery({
     queryKey: keys.notifications(userId ?? ''),
