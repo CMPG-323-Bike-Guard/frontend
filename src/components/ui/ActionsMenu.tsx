@@ -63,10 +63,10 @@ export function ActionsMenu({ label, menuId, children }: { label: string; menuId
       <Button
         ref={triggerRef}
         type="button"
-        variant="ghost"
+        variant="subtle"
         size="sm"
-        className="h-8 w-8 px-1"
-        icon={<MoreHorizontal className="h-4 w-4" aria-hidden="true" />}
+        className={`h-10 w-10 shrink-0 px-1 text-ink-900 cursor-pointer hover:bg-ink-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal-600 ${open ? 'bg-ink-100' : ''}`}
+        icon={<MoreHorizontal className="h-6 w-6" aria-hidden="true" />}
         aria-label={`Actions for ${label}`}
         aria-expanded={open}
         aria-controls={menuId}
@@ -93,7 +93,7 @@ export function ActionsMenu({ label, menuId, children }: { label: string; menuId
           role="group"
           aria-label={`Actions for ${label}`}
           style={{ position: 'fixed', top: position.top, left: position.left, zIndex: 50 }}
-          className="flex min-w-44 flex-col items-stretch gap-1 rounded-card border border-ink-200 bg-white p-2 shadow-lg"
+          className="flex min-w-44 flex-col items-stretch gap-1 rounded-card border border-ink-200 bg-white p-2 shadow-lg [&_button]:h-10 [&_button]:min-h-[36px] [&_button]:px-3 [&_button]:py-2 [&_button]:text-sm"
           onClick={(event) => {
             if ((event.target as HTMLElement).closest('button')) setOpen(false);
           }}

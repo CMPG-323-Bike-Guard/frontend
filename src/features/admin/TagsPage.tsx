@@ -148,6 +148,7 @@ export function TagsPage() {
                     <Th>Bike</Th>
                     <Th>Owner</Th>
                     <Th>Status</Th>
+                    <Th align="right">Actions</Th>
                   </tr>
                 </thead>
                 <tbody>
@@ -164,10 +165,9 @@ export function TagsPage() {
                         </Td>
                         <Td className="text-ink-900">{view.bike.name}</Td>
                         <Td className="text-ink-900">{view.owner.name}</Td>
-                        <Td>
-                          <div className="flex items-center justify-between gap-3">
-                            <TagStatusBadge status={tag.status} />
-                            <ActionsMenu label={tag.tagRef} menuId={`tag-actions-${tag.tagId}`}>
+                        <Td><TagStatusBadge status={tag.status} /></Td>
+                        <Td align="right">
+                          <ActionsMenu label={tag.tagRef} menuId={`tag-actions-${tag.tagId}`}>
                               {tag.status === 'awaiting_collection' && (
                                 <Button
                                   className="w-full justify-start"
@@ -195,8 +195,7 @@ export function TagsPage() {
                               ) : (
                                 <p className="px-3 py-2 text-sm text-ink-500">No actions available</p>
                               )}
-                            </ActionsMenu>
-                          </div>
+                          </ActionsMenu>
                         </Td>
                       </tr>
                     );
