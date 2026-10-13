@@ -5,6 +5,7 @@ import { useCurrentUser } from '@/auth/AuthContext';
 import {
   useApproveRegistration,
   useCreateBike,
+  usePendingRegistrations,
   useRegistrations,
   useRejectRegistration,
 } from '@/api/queries';
@@ -38,6 +39,7 @@ export function RegistrationsPage() {
 
   const [filter, setFilter] = useState<Filter>('pending_approval');
   const registrations = useRegistrations(filter as BikeStatus);
+  const pendingRegistrations = usePendingRegistrations();
   const approve = useApproveRegistration();
   const reject = useRejectRegistration();
   const createBike = useCreateBike();
@@ -56,6 +58,7 @@ export function RegistrationsPage() {
   const [onBehalfError, setOnBehalfError] = useState<string | null>(null);
 
   const counts = useMemo(() => registrations.data?.length ?? 0, [registrations.data]);
+  const pendingCount = pendingRegistrations.data?.length ?? 0;
 
   async function submitApproval() {
     if (!approving) return;
@@ -130,7 +133,10 @@ export function RegistrationsPage() {
         value={filter}
         onChange={setFilter}
         options={[
-          { value: 'pending_approval', label: 'Waiting for review' },
+          {
+            value: 'pending_approval',
+            label: pendingCount > 0 ? `Waiting for review (${pendingCount})` : 'Waiting for review',
+          },
           { value: 'tag_pending', label: 'Tag to collect' },
           { value: 'active', label: 'Protected' },
           { value: 'rejected', label: 'Sent back' },
@@ -145,7 +151,7 @@ export function RegistrationsPage() {
           <EmptyState
             title="Nothing in this list"
             description="Try another status, or register a bike on behalf of a student at the service point."
-            action={<Button variant="secondary" onClick={() => setOnBehalfOpen(true)}>Register for a student</Button>}
+            action={<Button variant="subtle" onClick={() => setOnBehalfOpen(true)}>Register for a student</Button>}
           />
         </Card>
       )}
@@ -154,9 +160,9 @@ export function RegistrationsPage() {
         {(registrations.data ?? []).map((view) => (
           <Card key={view.bike.bikeId}>
             <CardBody className="flex flex-col gap-4 sm:flex-row">
-              {view.bike.photoPath && (
+              {view.bike.photo.live && (
                 <img
-                  src={view.bike.photoPath}
+                  src={view.bike.photo.live}
                   alt={`${view.bike.name}, a ${view.bike.colour} ${view.bike.makeModel}`}
                   className="h-32 w-full rounded-control object-cover sm:w-48"
                 />
@@ -190,7 +196,7 @@ export function RegistrationsPage() {
                     <Button size="sm" onClick={() => setApproving(view)}>
                       Approve and issue a tag
                     </Button>
-                    <Button size="sm" variant="secondary" onClick={() => setRejecting(view)}>
+                    <Button size="sm" variant="subtle" onClick={() => setRejecting(view)}>
                       Send back
                     </Button>
                   </div>
@@ -209,7 +215,7 @@ export function RegistrationsPage() {
         description={approving ? `${approving.bike.name} · ${approving.owner.name}` : undefined}
         footer={
           <>
-            <Button variant="ghost" onClick={() => setApproving(null)}>
+            <Button variant="subtle" onClick={() => setApproving(null)}>
               Cancel
             </Button>
             <Button loading={approve.isPending} onClick={submitApproval}>
@@ -250,10 +256,10 @@ export function RegistrationsPage() {
         description={rejecting ? `${rejecting.bike.name} · ${rejecting.owner.name}` : undefined}
         footer={
           <>
-            <Button variant="ghost" onClick={() => setRejecting(null)}>
+            <Button variant="subtle" onClick={() => setRejecting(null)}>
               Cancel
             </Button>
-            <Button variant="danger" loading={reject.isPending} onClick={submitRejection}>
+            <Button variant="dangerOutline" loading={reject.isPending} onClick={submitRejection}>
               Send back
             </Button>
           </>
@@ -299,6 +305,7 @@ export function RegistrationsPage() {
         <BikeForm
           submitLabel="Register and queue for a tag"
           submitting={createBike.isPending}
+          cancelVariant="subtle"
           onSubmit={registerOnBehalf}
           onCancel={() => setOnBehalfOpen(false)}
         />

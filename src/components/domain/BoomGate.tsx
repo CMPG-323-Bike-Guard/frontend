@@ -27,7 +27,11 @@ export function BoomGate({
             width,
             height,
             'rounded-sm transition-transform duration-500',
-            state === 'open' ? 'boom-bar -rotate-[62deg]' : state === 'offline' ? 'bg-ink-500' : 'boom-bar',
+            state === 'open'
+              ? 'boom-bar -rotate-[62deg]'
+              : state === 'offline'
+                ? 'bg-ink-500'
+                : 'boom-bar',
             state === 'manual' && 'opacity-70',
           )}
         />

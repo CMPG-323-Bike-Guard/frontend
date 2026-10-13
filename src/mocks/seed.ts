@@ -3,11 +3,11 @@ import type {
   AuditAction,
   Bike,
   BikePermission,
-  Card,
   Gate,
   GateEvent,
   MismatchReason,
   Notification,
+  PhotoModeration,
   RfidTag,
   User,
 } from '@/types';
@@ -40,24 +40,65 @@ function iso(offsetMs: number): string {
   return new Date(Date.now() - offsetMs).toISOString();
 }
 
+function userPhoto(userId: string, name: string): PhotoModeration {
+  const live = avatarFor(name);
+  if (userId === 'u-102') {
+    return {
+      live,
+      pending: avatarFor('Pieter updated photo'),
+      status: 'pending',
+      rejectionReason: null,
+      reviewedBy: null,
+      reviewedAt: null,
+      submittedAt: iso(2 * 60 * 60_000),
+    };
+  }
+  if (userId === 'u-103') {
+    return {
+      live,
+      pending: avatarFor('Lerato rejected photo'),
+      status: 'rejected',
+      rejectionReason: 'Please upload a clear, front-facing photo.',
+      reviewedBy: 'u-301',
+      reviewedAt: iso(DAY),
+      submittedAt: iso(2 * DAY),
+    };
+  }
+  return {
+    live,
+    pending: null,
+    status: 'approved',
+    rejectionReason: null,
+    reviewedBy: 'u-301',
+    reviewedAt: iso(30 * DAY),
+    submittedAt: iso(31 * DAY),
+  };
+}
+
 function student(
   id: string,
   number: string,
   name: string,
   email: string,
 ): User {
+  const photo = userPhoto(id, name);
   return {
     userId: id,
     studentStaffNumber: number,
     name,
     role: 'student',
     email,
-    photoPath: avatarFor(name),
+    phone: null,
+    photo,
+    photoPath: photo.live,
     accountStatus: 'active',
   };
 }
 
 export function buildSeed() {
+  const johanPhoto = userPhoto('u-201', 'Johan Prinsloo');
+  const gracePhoto = userPhoto('u-202', 'Grace Mahlangu');
+  const riaanPhoto = userPhoto('u-301', 'Riaan Coetzee');
   const users: User[] = [
     student('u-101', '41002381', 'Thandi Mokoena', '41002381@mynwu.ac.za'),
     student('u-102', '41118742', 'Pieter van Wyk', '41118742@mynwu.ac.za'),
@@ -73,7 +114,9 @@ export function buildSeed() {
       name: 'Johan Prinsloo',
       role: 'guard',
       email: 'j.prinsloo@nwu.ac.za',
-      photoPath: avatarFor('Johan Prinsloo'),
+      phone: null,
+      photo: johanPhoto,
+      photoPath: johanPhoto.live,
       accountStatus: 'active',
     },
     {
@@ -82,7 +125,9 @@ export function buildSeed() {
       name: 'Grace Mahlangu',
       role: 'guard',
       email: 'g.mahlangu@nwu.ac.za',
-      photoPath: avatarFor('Grace Mahlangu'),
+      phone: null,
+      photo: gracePhoto,
+      photoPath: gracePhoto.live,
       accountStatus: 'active',
     },
     {
@@ -91,19 +136,13 @@ export function buildSeed() {
       name: 'Riaan Coetzee',
       role: 'admin',
       email: 'r.coetzee@nwu.ac.za',
-      photoPath: avatarFor('Riaan Coetzee'),
+      phone: null,
+      photo: riaanPhoto,
+      photoPath: riaanPhoto.live,
       accountStatus: 'active',
     },
     
   ];
-
-  const cards: Card[] = users.map((user, index) => ({
-    cardId: `c-${index + 1}`,
-    userId: user.userId,
-    // Card numbers are stored hashed; the UI only ever sees this reference.
-    cardRef: `CRD-${(user.studentStaffNumber.split('').reverse().join('') + '0000').slice(0, 6)}`,
-    status: 'active',
-  }));
 
   const bikeSpecs: Array<{
     id: string;
@@ -140,20 +179,43 @@ export function buildSeed() {
     { id: 'b-14', owner: 'u-105', name: 'Training bike', make: 'Fuji Sportif', colour: 'Yellow', status: 'draft', days: 0 },
   ];
 
-  const bikes: Bike[] = bikeSpecs.map((spec) => ({
-    bikeId: spec.id,
-    ownerUserId: spec.owner,
-    name: spec.name,
-    makeModel: spec.make,
-    colour: spec.colour,
-    photoPath: bikePhotoFor(spec.colour, spec.make),
-    status: spec.status,
-    submittedAt: iso(spec.days * DAY),
-    reviewedAt: ['active', 'tag_pending', 'rejected', 'removed'].includes(spec.status)
-      ? iso(Math.max(0, spec.days - 1) * DAY)
-      : null,
-    reviewNote: spec.note ?? null,
-  }));
+  const bikes: Bike[] = bikeSpecs.map((spec) => {
+    const live = bikePhotoFor(spec.colour, spec.make);
+    const photo: PhotoModeration = spec.id === 'b-03'
+      ? {
+          live,
+          pending: bikePhotoFor('Silver', 'Silverback updated photo'),
+          status: 'pending',
+          rejectionReason: null,
+          reviewedBy: null,
+          reviewedAt: null,
+          submittedAt: iso(3 * 60 * 60_000),
+        }
+      : {
+          live,
+          pending: null,
+          status: 'approved',
+          rejectionReason: null,
+          reviewedBy: 'u-301',
+          reviewedAt: iso(30 * DAY),
+          submittedAt: iso(31 * DAY),
+        };
+    return {
+      bikeId: spec.id,
+      ownerUserId: spec.owner,
+      name: spec.name,
+      makeModel: spec.make,
+      colour: spec.colour,
+      photo,
+      photoPath: photo.live,
+      status: spec.status,
+      submittedAt: iso(spec.days * DAY),
+      reviewedAt: ['active', 'tag_pending', 'rejected', 'removed'].includes(spec.status)
+        ? iso(Math.max(0, spec.days - 1) * DAY)
+        : null,
+      reviewNote: spec.note ?? null,
+    };
+  });
 
   const tags: RfidTag[] = [
     { tagId: 't-01', bikeId: 'b-01', tagRef: 'BG-4A19C2', status: 'active', issuedAt: iso(45 * DAY), deactivatedAt: null, replacesTagId: null },
@@ -168,11 +230,11 @@ export function buildSeed() {
     { tagId: 't-10', bikeId: 'b-12', tagRef: 'BG-31FF9B', status: 'deactivated', issuedAt: iso(118 * DAY), deactivatedAt: iso(9 * DAY), replacesTagId: null },
   ];
 
-  // Gate health, mode and manualSince now live directly on Gate — there is no
+  // Gate health, mode and manualSince now live directly on Gate ,  there is no
   // separate lane entity. Only Gate 1 and Gate 2 carry live traffic below.
   const gates: Gate[] = [
-    { gateId: 'g-1', name: 'Gate 1', location: 'Hoffman Street — pilot gate', health: 'good', commissioned: true, mode: 'automated', manualSince: null },
-    { gateId: 'g-2', name: 'Gate 2', location: 'Borcherd Street — staging bridge', health: 'warning', commissioned: true, mode: 'manual', manualSince: iso(42 * 60_000) },
+    { gateId: 'g-1', name: 'Gate 1', location: 'Hoffman Street ,  pilot gate', health: 'good', commissioned: true, mode: 'automated', manualSince: null },
+    { gateId: 'g-2', name: 'Gate 2', location: 'Borcherd Street ,  staging bridge', health: 'warning', commissioned: true, mode: 'manual', manualSince: iso(42 * 60_000) },
     { gateId: 'g-3', name: 'Gate 3', location: 'Esselen Street', health: 'not_commissioned', commissioned: false, mode: 'automated', manualSince: null },
     { gateId: 'g-4', name: 'Gate 4', location: 'Meyer Street', health: 'not_commissioned', commissioned: false, mode: 'automated', manualSince: null },
     { gateId: 'g-5', name: 'Gate 5', location: 'Thabo Mbeki Avenue', health: 'not_commissioned', commissioned: false, mode: 'automated', manualSince: null },
@@ -209,7 +271,7 @@ export function buildSeed() {
   const alarms: Alarm[] = [];
   const activeBikes = bikes.filter((bike) => bike.status === 'active');
   const tagByBike = new Map(tags.map((tag) => [tag.bikeId, tag]));
-  const cardByUser = new Map(cards.map((card) => [card.userId, card]));
+  const numberByUser = new Map(users.map((user) => [user.userId, user.studentStaffNumber]));
 
   let sequence = 0;
   const nextId = (prefix: string) => `${prefix}-${(++sequence).toString().padStart(5, '0')}`;
@@ -236,7 +298,6 @@ export function buildSeed() {
 
       const bike = activeBikes[Math.floor(random() * activeBikes.length)];
       const tag = tagByBike.get(bike.bikeId) ?? null;
-      const card = cardByUser.get(bike.ownerUserId) ?? null;
       const gateId = random() > 0.45 ? 'g-1' : 'g-2';
       const roll = random();
       const isMismatch = roll > 0.94;
@@ -248,7 +309,7 @@ export function buildSeed() {
         gateId,
         userId: bike.ownerUserId,
         bikeId: isMismatch ? null : bike.bikeId,
-        cardRef: card?.cardRef ?? null,
+        studentNumber: numberByUser.get(bike.ownerUserId) ?? null,
         tagRef: tag?.tagRef ?? null,
         result: isMismatch ? 'mismatch' : isManual ? 'manual' : 'match',
         mismatchReason: isMismatch ? mismatchReasons[Math.floor(random() * mismatchReasons.length)] : null,
@@ -327,18 +388,14 @@ const openAlarmSpecs: Array<{
   },
 ];
 
-
-  
 openAlarmSpecs.forEach((spec) => {
-  const card = cardByUser.get(spec.userId) ?? null;
-
   const event: GateEvent = {
     eventId: nextId('e'),
     timestamp: iso(spec.minutesAgo * 60_000),
     gateId: spec.gateId,
     userId: spec.userId,
     bikeId: null,
-    cardRef: card?.cardRef ?? null,
+    studentNumber: numberByUser.get(spec.userId) ?? null,
     tagRef: spec.tagRef,
     result: 'mismatch',
     mismatchReason: spec.reason,
@@ -447,7 +504,7 @@ openAlarmSpecs.forEach((spec) => {
     },
   ];
 
-  return { users, cards, bikes, tags, gates, events, alarms, permissions, notifications, audit };
+  return { users, bikes, tags, gates, events, alarms, permissions, notifications, audit };
 }
 
 export type SeedData = ReturnType<typeof buildSeed>;

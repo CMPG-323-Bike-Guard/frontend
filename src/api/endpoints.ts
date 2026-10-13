@@ -43,6 +43,9 @@ export const endpoints = {
     list: '/gates',
     mode: (gateId: string) => `/gates/${gateId}/mode`,
   },
+  dev: {
+    simulateCrossing: '/dev/simulate-crossing',
+  },
   crossings: {
     list: '/crossings',
     manual: '/crossings/manual',
@@ -57,9 +60,22 @@ export const endpoints = {
 
   users: {
     list: '/users',
+    create: '/users',
+    detail: (userId: string) => `/users/${userId}`,
+    deactivate: (userId: string) => `/users/${userId}/deactivate`,
+    reactivate: (userId: string) => `/users/${userId}/reactivate`,
+    me: '/users/me',
+    password: '/users/me/password',
+    profilePhoto: '/users/me/photo',
     byNumber: (studentNumber: string) => `/users/lookup/${studentNumber}`,
     notifications: (userId: string) => `/users/${userId}/notifications`,
     notification: (notificationId: string) => `/notifications/${notificationId}`,
+  },
+  photos: {
+    pending: '/photos/pending',
+    approve: (targetType: 'user' | 'bike', entityId: string) => `/photos/${targetType}/${entityId}/approve`,
+    reject: (targetType: 'user' | 'bike', entityId: string) => `/photos/${targetType}/${entityId}/reject`,
+    bike: (bikeId: string) => `/bikes/${bikeId}/photo`,
   },
   reporting: {
     stats: '/reports/stats',

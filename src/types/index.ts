@@ -8,6 +8,34 @@
 
 export type Role = 'student' | 'guard' | 'admin';
 
+export type PhotoStatus = 'none' | 'pending' | 'approved' | 'rejected';
+
+export interface PhotoModeration {
+  live: string | null;
+  pending: string | null;
+  status: PhotoStatus;
+  rejectionReason: string | null;
+  reviewedBy: string | null;
+  reviewedAt: string | null;
+  submittedAt: string | null;
+}
+
+export type PhotoTargetType = 'user' | 'bike';
+
+export interface PendingPhoto {
+  targetType: PhotoTargetType;
+  entityId: string;
+  ownerUserId: string;
+  ownerName: string;
+  photo: PhotoModeration;
+}
+
+export interface PhotoReviewResult {
+  targetType: PhotoTargetType;
+  entityId: string;
+  photo: PhotoModeration;
+}
+
 /** Account status on the users entity (Technical Specification 7.1). */
 export type AccountStatus = 'active' | 'suspended';
 
@@ -23,7 +51,7 @@ export type BikeStatus =
   | 'pending_approval' // submitted, waiting for admin review
   | 'rejected' // admin rejected, reason recorded
   | 'tag_pending' // approved; tag allocated or awaiting stock (UC-04)
-  | 'active' // tag collected and fitted — recognised at the gate
+  | 'active' // tag collected and fitted ,  recognised at the gate
   | 'removed'; // student removed the bike from their profile (FR-STU-05)
 
 export type TagStatus = 'active' | 'deactivated' | 'lost' | 'stolen' | 'awaiting_collection';
@@ -64,25 +92,33 @@ export type EscalationReason = 'no_acknowledgement' | 'guard_request';
 
 export type CrossingSource = 'automated' | 'manual_entry' | 'guard_override';
 
+export interface NewPerson {
+  studentStaffNumber: string;
+  name: string;
+  email: string;
+  role: Role;
+  password: string;
+}
+
+export interface PersonEdit {
+  studentStaffNumber: string;
+  name: string;
+  email: string;
+  phone: string;
+  role: Role;
+}
+
 export interface User {
   userId: string;
   studentStaffNumber: string;
   name: string;
   role: Role;
   email: string;
+  phone: string | null;
+  photo: PhotoModeration;
+  /** Compatibility projection of photo.live for existing consumers. */
   photoPath: string | null;
   accountStatus: AccountStatus;
-}
-
-/**
- * Card identifiers are never held in plain text (Technical Specification 3.1,
- * 7.3.4). The frontend only ever receives a short non-reversible reference.
- */
-export interface Card {
-  cardId: string;
-  userId: string;
-  cardRef: string;
-  status: 'active' | 'blocked';
 }
 
 export interface Bike {
@@ -91,6 +127,8 @@ export interface Bike {
   name: string;
   makeModel: string;
   colour: string;
+  photo: PhotoModeration;
+  /** Compatibility projection of photo.live for existing consumers. */
   photoPath: string | null;
   status: BikeStatus;
   submittedAt: string;
@@ -124,7 +162,7 @@ export interface GateEvent {
   gateId: string;
   userId: string | null;
   bikeId: string | null;
-  cardRef: string | null;
+  studentNumber: string | null;
   tagRef: string | null;
   result: CrossingResult;
   mismatchReason: MismatchReason | null;
@@ -159,7 +197,9 @@ export interface Alarm {
 export interface BikePermission {
   permissionId: string;
   bikeId: string;
-  authorisedUserId: string;
+  authorisedUserId: string | null;
+  authorisedStudentNumber?: string;
+  authorisedName?: string | null;
   status: 'active' | 'revoked';
   grantedAt: string;
   revokedAt: string | null;
@@ -183,7 +223,7 @@ export interface Notification {
   body: string;
   createdAt: string;
   read: boolean;
-  kind: 'tag_ready' | 'registration' | 'security' | 'system';
+  kind: 'tag_ready' | 'registration' | 'security' | 'photo_review' | 'system';
 }
 
 export interface Session {

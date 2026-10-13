@@ -19,7 +19,7 @@ export function CrossingTable({ rows, showGate = true }: { rows: CrossingView[];
           {showGate && <Th>Gate</Th>}
           <Th>Person</Th>
           <Th>Bike</Th>
-          <Th>Card ref</Th>
+          <Th>Student no.</Th>
           <Th>Tag ref</Th>
           <Th>Result</Th>
           <Th align="right">Check</Th>
@@ -31,11 +31,11 @@ export function CrossingTable({ rows, showGate = true }: { rows: CrossingView[];
             <Td className="whitespace-nowrap text-ink-700">{formatDateTime(event.timestamp)}</Td>
             {showGate && <Td className="whitespace-nowrap text-ink-700">{gateName}</Td>}
             <Td>
-              <span className="font-medium text-ink-900">{userName ?? 'Unidentified card'}</span>
+              <span className="font-medium text-ink-900">{userName ?? 'Unidentified person'}</span>
               {studentStaffNumber && <span className="block text-xs text-ink-500">{studentStaffNumber}</span>}
             </Td>
-            <Td className="text-ink-700">{bikeName ?? (event.note ? event.note : '—')}</Td>
-            <Td className="text-ink-500">{shortRef(event.cardRef)}</Td>
+            <Td className="text-ink-700">{bikeName?.trim() || '—'}</Td>
+            <Td className="text-ink-500">{event.studentNumber ?? ', '}</Td>
             <Td className="text-ink-500">{shortRef(event.tagRef)}</Td>
             <Td>
               <div className="flex flex-col gap-1">
@@ -48,7 +48,7 @@ export function CrossingTable({ rows, showGate = true }: { rows: CrossingView[];
             </Td>
             <Td align="right">
               {event.verificationMs === null ? (
-                <span className="text-ink-400">—</span>
+                <span className="text-ink-400">, </span>
               ) : (
                 <span className={cx(event.verificationMs > VERIFICATION_BUDGET_MS ? 'text-alert-600' : 'text-ink-600')}>
                   {event.verificationMs} ms

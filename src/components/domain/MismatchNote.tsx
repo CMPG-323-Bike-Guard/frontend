@@ -12,7 +12,7 @@ export function MismatchNote({ reason, className }: { reason: MismatchReason | n
   const tones = {
     high: 'border-alert-500/40 bg-alert-100 text-alert-600',
     medium: 'border-warn-500/40 bg-warn-100 text-warn-600',
-    low: 'border-ink-200 bg-ink-50 text-ink-700',
+    low: 'border-ink-100 bg-ink-50 text-ink-700',
   };
   return (
     <div className={cx('rounded-control border px-3 py-2', tones[meta.risk], className)}>

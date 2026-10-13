@@ -19,6 +19,7 @@ interface AuthState {
     selectedRole: Role,
   ): Promise<User>;
   signOut(): void;
+  updateCurrentUser(user: User): void;
   can(...roles: Role[]): boolean;
 }
 
@@ -95,16 +96,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setStatus('anonymous');
   }, []);
 
+  const updateCurrentUser = useCallback((updatedUser: User) => {
+    setUser((currentUser) =>
+      currentUser?.userId === updatedUser.userId ? updatedUser : currentUser,
+    );
+  }, []);
+
   const value = useMemo<AuthState>(
     () => ({
       user,
       status,
       signIn,
       signOut,
+      updateCurrentUser,
       can: (...roles: Role[]) =>
         Boolean(user && roles.includes(user.role)),
     }),
-    [user, status, signIn, signOut],
+    [user, status, signIn, signOut, updateCurrentUser],
   );
 
   return (

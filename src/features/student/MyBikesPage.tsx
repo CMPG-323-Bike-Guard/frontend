@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { BikeIcon, Plus } from 'lucide-react';
 import { useCurrentUser } from '@/auth/AuthContext';
 import { useBikes, useNotifications } from '@/api/queries';
@@ -22,6 +22,7 @@ import { BikeCard } from '@/components/domain/BikeCard';
  * - View previously removed bikes.
 */
 export function MyBikesPage() {
+  const [tagNoticeDismissed, setTagNoticeDismissed] = useState(false);
   const user = useCurrentUser();
   const bikes = useBikes(user.userId);
   const notifications = useNotifications(user.userId);
@@ -49,15 +50,20 @@ export function MyBikesPage() {
         }
       />
 
-      {readyToCollect.length > 0 && (
-        <Alert tone="warn" title="A tag is waiting for you">
+      {readyToCollect.length > 0 && !tagNoticeDismissed && (
+        <Alert
+          tone="warn"
+          variant="orange"
+          title="A tag is waiting for you"
+          onDismiss={() => setTagNoticeDismissed(true)}
+        >
           Collect the tag for {readyToCollect.map((view) => `“${view.bike.name}”`).join(', ')} from the Protection
           Services desk, fit it to the frame, and the gate will start recognising the bike.
         </Alert>
       )}
 
       {unread > 0 && (
-        <Alert tone="info" action={<LinkButton to="/notifications" variant="secondary" size="sm">Open</LinkButton>}>
+        <Alert tone="info" action={<LinkButton to="/notifications" variant="subtle" size="sm">Open</LinkButton>}>
           You have {unread} unread {unread === 1 ? 'message' : 'messages'} from Protection Services.
         </Alert>
       )}

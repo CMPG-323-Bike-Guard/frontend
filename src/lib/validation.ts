@@ -3,7 +3,7 @@ import { formatBytes } from './format';
 
 /**
  * Client-side validation only. Every rule here is also the backend's
- * responsibility — the API is the authority (Technical Specification 5.1).
+ * responsibility ,  the API is the authority (Technical Specification 5.1).
  */
 
 export type FieldErrors<T extends string = string> = Partial<Record<T, string>>;

@@ -7,15 +7,15 @@ import { ApiError } from '@/api/client';
 import { formatDate } from '@/lib/format';
 import { requireText, validateTagRef } from '@/lib/validation';
 import { Alert } from '@/components/ui/Alert';
+import { ActionsMenu } from '@/components/ui/ActionsMenu';
 import { Button } from '@/components/ui/Button';
-import { Card, CardBody, CardHeader } from '@/components/ui/Card';
+import { Card, CardBody } from '@/components/ui/Card';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Field } from '@/components/ui/Field';
-import { Input, Textarea } from '@/components/ui/Input';
+import { Input, Select, Textarea } from '@/components/ui/Input';
 import { Modal } from '@/components/ui/Modal';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { SkeletonRows } from '@/components/ui/Spinner';
-import { Tabs } from '@/components/ui/Tabs';
 import { TableWrap, Td, Th } from '@/components/ui/Table';
 import { useToast } from '@/components/ui/Toast';
 import { TagStatusBadge } from '@/components/domain/StatusBadges';
@@ -98,43 +98,39 @@ export function TagsPage() {
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Tags"
-        description="Hand over issued tags, deactivate lost ones and link replacements without losing any history."
+        description="Manage tag handovers, replacements and deactivations."
       />
 
-      <Card>
-        <CardBody className="flex flex-col gap-4">
-          <Field label="Search tags">
-            {({ id }) => (
-              <div className="relative max-w-md">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" aria-hidden="true" />
-                <Input
-                  id={id}
-                  className="pl-9"
-                  placeholder="Tag reference, bike, student name or number"
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                />
-              </div>
-            )}
-          </Field>
-          <Tabs<Filter>
-            label="Filter tags by status"
-            value={filter}
-            onChange={setFilter}
-            options={[
-              { value: 'all', label: 'All tags' },
-              { value: 'awaiting_collection', label: 'Awaiting collection' },
-              { value: 'active', label: 'Active' },
-              { value: 'lost', label: 'Reported lost' },
-              { value: 'stolen', label: 'Reported stolen' },
-              { value: 'deactivated', label: 'Deactivated' },
-            ]}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="relative min-w-0 flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" aria-hidden="true" />
+          <Input
+            aria-label="Search tags"
+            className="pl-9"
+            placeholder="Tag reference, bike, student name or number"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
           />
-        </CardBody>
-      </Card>
+        </div>
+        <Select
+          aria-label="Status"
+          className="sm:w-56"
+          value={filter}
+          onChange={(event) => setFilter(event.target.value as Filter)}
+        >
+          <option value="all">All tags</option>
+          <option value="awaiting_collection">Awaiting collection</option>
+          <option value="active">Active</option>
+          <option value="lost">Reported lost</option>
+          <option value="stolen">Reported stolen</option>
+          <option value="deactivated">Deactivated</option>
+        </Select>
+        <p aria-live="polite" className="whitespace-nowrap text-right text-sm font-medium text-ink-600">
+          {rows.length} {rows.length === 1 ? 'tag' : 'tags'}
+        </p>
+      </div>
 
       <Card>
-        <CardHeader title={`${rows.length} ${rows.length === 1 ? 'tag' : 'tags'}`} />
         <CardBody className={rows.length ? undefined : 'py-0'}>
           {registrations.isLoading && <SkeletonRows rows={5} className="py-4" />}
           {registrations.isError && <Alert tone="alert">{(registrations.error as Error).message}</Alert>}
@@ -151,58 +147,59 @@ export function TagsPage() {
                     <Th>Tag</Th>
                     <Th>Bike</Th>
                     <Th>Owner</Th>
-                    <Th>Issued</Th>
                     <Th>Status</Th>
                     <Th align="right">Actions</Th>
                   </tr>
                 </thead>
                 <tbody>
-                  {rows.map((view) => (
-                    <tr key={view.tag!.tagId} className="hover:bg-ink-50/60">
-                      <Td className="font-medium text-ink-900">{view.tag!.tagRef}</Td>
-                      <Td>
-                        <span className="text-ink-900">{view.bike.name}</span>
-                        <span className="block text-xs text-ink-500">{view.bike.makeModel}</span>
-                      </Td>
-                      <Td>
-                        <span className="text-ink-900">{view.owner.name}</span>
-                        <span className="block text-xs text-ink-500">{view.owner.studentStaffNumber}</span>
-                      </Td>
-                      <Td className="text-ink-600">{view.tag!.issuedAt ? formatDate(view.tag!.issuedAt) : '—'}</Td>
-                      <Td>
-                        <TagStatusBadge status={view.tag!.status} />
-                        {view.tag!.replacesTagId && <span className="block text-xs text-ink-500">Replacement tag</span>}
-                      </Td>
-                      <Td align="right">
-                        <div className="flex flex-wrap justify-end gap-1.5">
-                          {view.tag!.status === 'awaiting_collection' && (
-                            <Button
-                              size="sm"
-                              loading={markCollected.isPending}
-                              onClick={() =>
-                                markCollected.mutate(
-                                  { tagId: view.tag!.tagId, adminUserId: admin.userId },
-                                  { onSuccess: () => toast.confirm('Handed over. The bike is now protected.') },
-                                )
-                              }
-                            >
-                              Mark collected
-                            </Button>
-                          )}
-                          {view.tag!.status !== 'deactivated' && (
-                            <Button size="sm" variant="secondary" onClick={() => setReplacing(view)}>
-                              Replace
-                            </Button>
-                          )}
-                          {view.tag!.status !== 'deactivated' && (
-                            <Button size="sm" variant="ghost" onClick={() => setDeactivating(view)}>
-                              Deactivate
-                            </Button>
-                          )}
-                        </div>
-                      </Td>
-                    </tr>
-                  ))}
+                  {rows.map((view) => {
+                    const tag = view.tag!;
+                    return (
+                      <tr key={tag.tagId} className="hover:bg-ink-50/60">
+                        <Td>
+                          <span className="font-medium text-ink-900">{tag.tagRef}</span>
+                          <span className="block text-xs text-ink-500">
+                            Issued {tag.issuedAt ? formatDate(tag.issuedAt) : 'Not recorded'}
+                            {tag.replacesTagId ? ' · Replacement tag' : ''}
+                          </span>
+                        </Td>
+                        <Td className="text-ink-900">{view.bike.name}</Td>
+                        <Td className="text-ink-900">{view.owner.name}</Td>
+                        <Td><TagStatusBadge status={tag.status} /></Td>
+                        <Td align="right">
+                          <ActionsMenu label={tag.tagRef} menuId={`tag-actions-${tag.tagId}`}>
+                              {tag.status === 'awaiting_collection' && (
+                                <Button
+                                  className="w-full justify-start"
+                                  size="sm"
+                                  loading={markCollected.isPending}
+                                  onClick={() =>
+                                    markCollected.mutate(
+                                      { tagId: tag.tagId, adminUserId: admin.userId },
+                                      { onSuccess: () => toast.confirm('Handed over. The bike is now protected.') },
+                                    )
+                                  }
+                                >
+                                  Mark collected
+                                </Button>
+                              )}
+                              {tag.status !== 'deactivated' ? (
+                                <>
+                                  <Button className="w-full justify-start" size="sm" variant="subtle" onClick={() => setReplacing(view)}>
+                                    Replace
+                                  </Button>
+                                  <Button className="w-full justify-start" size="sm" variant="dangerOutline" onClick={() => setDeactivating(view)}>
+                                    Deactivate
+                                  </Button>
+                                </>
+                              ) : (
+                                <p className="px-3 py-2 text-sm text-ink-500">No actions available</p>
+                              )}
+                          </ActionsMenu>
+                        </Td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </TableWrap>
             ))}
@@ -217,7 +214,7 @@ export function TagsPage() {
         description={replacing ? `${replacing.bike.name} · ${replacing.owner.name}` : undefined}
         footer={
           <>
-            <Button variant="ghost" onClick={() => setReplacing(null)}>
+            <Button variant="subtle" onClick={() => setReplacing(null)}>
               Cancel
             </Button>
             <Button loading={replace.isPending} onClick={submitReplacement}>
@@ -253,10 +250,10 @@ export function TagsPage() {
         description={deactivating ? `${deactivating.tag?.tagRef} · ${deactivating.owner.name}` : undefined}
         footer={
           <>
-            <Button variant="ghost" onClick={() => setDeactivating(null)}>
+            <Button variant="subtle" onClick={() => setDeactivating(null)}>
               Cancel
             </Button>
-            <Button variant="danger" loading={deactivate.isPending} onClick={submitDeactivation}>
+            <Button variant="dangerOutline" loading={deactivate.isPending} onClick={submitDeactivation}>
               Deactivate
             </Button>
           </>

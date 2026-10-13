@@ -2,12 +2,33 @@
 
 @theme {
   --color-paper: #F8F9FC;
+  --color-portal-background: #F4F1F8;
+  --color-card-header: #F1EDF9;
   --color-ink-950: #111827;
   --color-ink-900: #1F2937;
-  --color-ink-500: #6B7280;
+  --color-ink-100: #E0DCEC;
+  --color-ink-500: #626B78;
   --color-ink-50: #F9FAFB;
+  --color-brand-purple: #6C3D91;
   --color-signal-600: #6C3D91;
   --color-signal-500: #6C3D91;
+  --color-tag-notice-orange: #C2410C;
+  --color-tag-status-green: #16A34A;
+    --color-action-red: #B91C1C;
+  --color-action-red-tint: #FEF2F2;
+  --color-action-red-tint-hover: #FEE2E2;
+  --color-alert-100: #FEE2E2;
+  --color-alert-500: #DC2626;
+  --color-alert-600: #B91C1C;
+  --color-gate-warning-border: #DC2626;
+  --color-gate-warning-background: #FEE2E2;
+  --color-sidebar-unread: #FFC1AD;
+  --radius-control: 0.5rem;
+  --radius-card: var(--radius-control);
+  --radius-pill: var(--radius-control);
+  --radius-sm: var(--radius-control);
+  --radius-md: var(--radius-control);
+  --radius-lg: var(--radius-control);
 }
 
 /* BikeGuard base styling */
@@ -38,7 +59,7 @@ h4 {
 :where(a, button, input, select, textarea, [tabindex]):focus-visible {
   outline: 2px solid #6C3D91;
   outline-offset: 2px;
-  border-radius: 4px;
+  border-radius: var(--radius-control);
 }
 
 /* Physical boom-gate hazard stripe */
@@ -67,7 +88,7 @@ h4 {
   background-color: #1F2937;
   color: white;
   padding: 0.5rem 1rem;
-  border-radius: 4px;
+  border-radius: var(--radius-control);
 }
 
 @media (prefers-reduced-motion: reduce) {

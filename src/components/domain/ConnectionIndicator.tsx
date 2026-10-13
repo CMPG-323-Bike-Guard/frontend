@@ -10,7 +10,7 @@ export function ConnectionIndicator({ state, className }: { state: ConnectionSta
   const meta = {
     connecting: { label: 'Connecting to the gate feed', tone: 'text-warn-500', icon: Wifi },
     connected: { label: 'Live', tone: 'text-ok-500', icon: Wifi },
-    disconnected: { label: 'Connection lost — reconnecting', tone: 'text-alert-500', icon: WifiOff },
+    disconnected: { label: 'Connection lost ,  reconnecting', tone: 'text-alert-500', icon: WifiOff },
   }[state];
   const Icon = meta.icon;
 

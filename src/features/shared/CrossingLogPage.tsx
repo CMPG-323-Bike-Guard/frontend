@@ -13,8 +13,14 @@ import { Field } from '@/components/ui/Field';
 import { Input, Select } from '@/components/ui/Input';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { SkeletonRows } from '@/components/ui/Spinner';
-import { Tabs } from '@/components/ui/Tabs';
 import { CrossingTable } from '@/components/domain/CrossingTable';
+
+function localDateValue() {
+  const date = new Date();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${date.getFullYear()}-${month}-${day}`;
+}
 
 /**
  * FR-ADM-05: search the crossing log by student, bike, time range and gate.
@@ -23,7 +29,13 @@ import { CrossingTable } from '@/components/domain/CrossingTable';
  * investigation, so the filters mirror the questions actually asked: who, what
  * bike, which gate, when.
  */
-export function CrossingLogPage({ canExport = false }: { canExport?: boolean }) {
+export function CrossingLogPage({
+  canExport = false,
+  preventFutureDates = true,
+}: {
+  canExport?: boolean;
+  preventFutureDates?: boolean;
+}) {
   const gates = useGates();
 
   const [query, setQuery] = useState('');
@@ -31,17 +43,36 @@ export function CrossingLogPage({ canExport = false }: { canExport?: boolean }) 
   const [result, setResult] = useState<CrossingResult | 'all'>('all');
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
+  const [, setDateRefresh] = useState(0);
+  const today = localDateValue();
+
+  function refreshDateLimit() {
+    if (preventFutureDates) setDateRefresh((current) => current + 1);
+  }
+
+  const fromError = preventFutureDates
+    ? from > today
+      ? 'Choose today or an earlier date.'
+      : from && to && from > to
+        ? 'The start date must be before the end date.'
+        : undefined
+    : undefined;
+  const toError = preventFutureDates && to > today ? 'Choose today or an earlier date.' : undefined;
+  const validFrom = from && !fromError ? from : undefined;
+  const validTo = to && !toError ? to : undefined;
+  const fromMax = preventFutureDates ? (to && to < today ? to : today) : to || undefined;
+  const toMin = preventFutureDates ? (from && from <= today ? from : undefined) : from || undefined;
 
   const filters = useMemo<CrossingFilters>(
     () => ({
       query: query.trim() || undefined,
       gateId: gateId || undefined,
       result: result === 'all' ? undefined : result,
-      from: from || undefined,
-      to: to || undefined,
+      from: validFrom,
+      to: validTo,
       limit: 200,
     }),
-    [query, gateId, result, from, to],
+    [query, gateId, result, validFrom, validTo],
   );
 
   const crossings = useCrossings(filters);
@@ -51,10 +82,10 @@ export function CrossingLogPage({ canExport = false }: { canExport?: boolean }) 
     const rows = (crossings.data ?? []).map((row) => ({
       timestamp: formatDateTime(row.event.timestamp),
       gate: row.gateName,
-      person: row.userName ?? 'Unidentified card',
+      person: row.userName ?? 'Unidentified person',
       student_staff_number: row.studentStaffNumber ?? '',
-      bike: row.bikeName ?? '',
-      card_ref: row.event.cardRef ?? '',
+      bike: row.bikeName?.trim() || '',
+      student_number: row.event.studentNumber ?? '',
       tag_ref: row.event.tagRef ?? '',
       result: row.event.result,
       reason: row.event.mismatchReason ? MISMATCH_REASON_META[row.event.mismatchReason].label : '',
@@ -80,7 +111,7 @@ export function CrossingLogPage({ canExport = false }: { canExport?: boolean }) 
         actions={
           canExport ? (
             <Button
-              variant="secondary"
+              variant="subtle"
               icon={<Download className="h-4 w-4" />}
               onClick={exportCsv}
               disabled={!crossings.data?.length}
@@ -91,96 +122,93 @@ export function CrossingLogPage({ canExport = false }: { canExport?: boolean }) 
         }
       />
 
-      <Card>
-        <CardHeader title="Find a crossing" description="Search by name, student number, bike or tag reference." />
-        <CardBody className="flex flex-col gap-4">
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            <Field label="Search" className="xl:col-span-2">
-              {({ id }) => (
-                <div className="relative">
-                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" aria-hidden="true" />
-                  <Input
-                    id={id}
-                    className="pl-9"
-                    placeholder="Name, student number, bike or tag"
-                    value={query}
-                    onChange={(event) => setQuery(event.target.value)}
-                  />
-                </div>
-              )}
-            </Field>
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+        <Field label="Search" className="min-w-0">
+          {({ id }) => (
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" aria-hidden="true" />
+              <Input
+                id={id}
+                className="pl-9"
+                placeholder="Name, number, bike or tag"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+              />
+            </div>
+          )}
+        </Field>
 
-            <Field label="Gate">
-              {({ id }) => (
-                <Select
-                  id={id}
-                  value={gateId}
-                  onChange={(event) => {
-                    setGateId(event.target.value);
-                  }}
-                >
-                  <option value="">All gates</option>
-                  {(gates.data ?? [])
-                    .filter((gate) => gate.commissioned)
-                    .map((gate) => (
-                      <option key={gate.gateId} value={gate.gateId}>
-                        {gate.name}
-                      </option>
-                    ))}
-                </Select>
-              )}
-            </Field>
+        <Field label="Gate" className="min-w-0">
+          {({ id }) => (
+            <Select id={id} value={gateId} onChange={(event) => setGateId(event.target.value)}>
+              <option value="">All gates</option>
+              {(gates.data ?? [])
+                .filter((gate) => gate.commissioned)
+                .map((gate) => (
+                  <option key={gate.gateId} value={gate.gateId}>
+                    {gate.name}
+                  </option>
+                ))}
+            </Select>
+          )}
+        </Field>
 
-            <Field label="From">
-              {({ id }) => (
-                <Input
-                  id={id}
-                  type="date"
-                  value={from}
-                  max={to || undefined}
-                  onChange={(event) => setFrom(event.target.value)}
-                />
-              )}
-            </Field>
-
-            <Field label="To">
-              {({ id }) => (
-                <Input
-                  id={id}
-                  type="date"
-                  value={to}
-                  min={from || undefined}
-                  onChange={(event) => setTo(event.target.value)}
-                />
-              )}
-            </Field>
-          </div>
-
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <Tabs<CrossingResult | 'all'>
-              label="Filter by result"
-              value={result}
-              onChange={setResult}
-              options={[
-                { value: 'all', label: 'All results' },
-                { value: 'match', label: 'Matches' },
-                { value: 'mismatch', label: 'Mismatches' },
-                { value: 'manual', label: 'Logged by hand' },
-              ]}
+        <Field label="From" error={fromError} className="min-w-0">
+          {({ id, describedBy, invalid }) => (
+            <Input
+              id={id}
+              type="date"
+              value={from}
+              aria-describedby={describedBy}
+              invalid={invalid}
+              max={fromMax}
+              onFocus={refreshDateLimit}
+              onPointerDown={refreshDateLimit}
+              onKeyDown={refreshDateLimit}
+              onChange={(event) => setFrom(event.target.value)}
             />
-            {filtered && (
-              <Button variant="ghost" size="sm" onClick={clearFilters}>
-                Clear filters
-              </Button>
-            )}
-          </div>
-        </CardBody>
-      </Card>
+          )}
+        </Field>
+
+        <Field label="To" error={toError} className="min-w-0">
+          {({ id, describedBy, invalid }) => (
+            <Input
+              id={id}
+              type="date"
+              value={to}
+              aria-describedby={describedBy}
+              invalid={invalid}
+              min={toMin}
+              max={preventFutureDates ? today : undefined}
+              onFocus={refreshDateLimit}
+              onPointerDown={refreshDateLimit}
+              onKeyDown={refreshDateLimit}
+              onChange={(event) => setTo(event.target.value)}
+            />
+          )}
+        </Field>
+
+        <Field label="Result" className="min-w-0">
+          {({ id }) => (
+            <Select id={id} value={result} onChange={(event) => setResult(event.target.value as CrossingResult | 'all')}>
+              <option value="all">All results</option>
+              <option value="match">Matches</option>
+              <option value="mismatch">Mismatches</option>
+              <option value="manual">Logged by hand</option>
+            </Select>
+          )}
+        </Field>
+      </div>
 
       <Card>
         <CardHeader
           title={crossings.data ? `${crossings.data.length} crossings` : 'Crossings'}
           description={crossings.data?.length === 200 ? 'Showing the 200 most recent matches. Narrow the dates to see more.' : undefined}
+          action={filtered ? (
+            <Button variant="ghost" size="sm" onClick={clearFilters}>
+              Clear filters
+            </Button>
+          ) : undefined}
         />
         <CardBody className={crossings.data?.length ? undefined : 'py-0'}>
           {crossings.isLoading && <SkeletonRows rows={6} className="py-4" />}
@@ -192,7 +220,7 @@ export function CrossingLogPage({ canExport = false }: { canExport?: boolean }) 
                 description="Widen the dates or clear the search to see the full log."
                 action={
                   filtered ? (
-                    <Button variant="secondary" onClick={clearFilters}>
+                    <Button variant="subtle" onClick={clearFilters}>
                       Clear filters
                     </Button>
                   ) : undefined

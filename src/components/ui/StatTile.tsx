@@ -24,7 +24,14 @@ export function StatTile({
     <div className="rounded-card border border-ink-100 bg-white px-4 py-3.5">
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm font-medium text-ink-500">{label}</p>
-        {icon && <span className="text-ink-300">{icon}</span>}
+        {icon && (
+          <span
+            aria-hidden="true"
+            className="grid h-5 w-5 shrink-0 place-items-center rounded-control bg-card-header text-brand-purple"
+          >
+            {icon}
+          </span>
+        )}
       </div>
       <p className={cx('mt-1 text-3xl font-semibold', accents[tone])}>{value}</p>
       {detail && <p className="mt-1 text-sm text-ink-500">{detail}</p>}

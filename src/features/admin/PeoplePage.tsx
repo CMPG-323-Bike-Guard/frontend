@@ -1,45 +1,41 @@
 import { useMemo, useState } from 'react';
-import { Search } from 'lucide-react';
-import type { Role } from '@/types';
+import { Pencil, Search, UserPlus } from 'lucide-react';
+import type { Role, User } from '@/types';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/api/client';
-import { keys, useRegistrations } from '@/api/queries';
+import { keys } from '@/api/queries';
+import { useCurrentUser } from '@/auth/AuthContext';
 import { ROLE_LABEL } from '@/lib/constants';
+import { ActionsMenu } from '@/components/ui/ActionsMenu';
 import { Alert } from '@/components/ui/Alert';
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
-import { Card, CardBody, CardHeader } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
+import { Card, CardBody } from '@/components/ui/Card';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { Field } from '@/components/ui/Field';
-import { Input } from '@/components/ui/Input';
+import { Input, Select } from '@/components/ui/Input';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { SkeletonRows } from '@/components/ui/Spinner';
 import { TableWrap, Td, Th } from '@/components/ui/Table';
-import { Tabs } from '@/components/ui/Tabs';
+import { AddPersonModal } from './AddPersonModal';
+import { EditPersonModal } from './EditPersonModal';
+import { PersonActionModal, type PersonAction } from './PersonActionModal';
 
 /**
- * Read-only directory.
- *
- * BikeGuard reads the existing NWU card system and does not issue or replace
- * cards (Functional Specification, Out of Scope), so accounts cannot be
- * created or edited here- this screen only helps an administrator find the
- * right person during an investigation or at the service point.
+ * * BikeGuard reads the existing NWU card system and does not issue or replace
+ * cards (Functional Specification, Out of Scope). An administrator can add a
+ * person's account here, and otherwise uses this screen to find the right
+ * person during an investigation or at the service point.
  */
 export function PeoplePage() {
   const [role, setRole] = useState<Role | 'all'>('all');
   const [query, setQuery] = useState('');
+  const [adding, setAdding] = useState(false);
+    const [editing, setEditing] = useState<User | null>(null);
+  const [action, setAction] = useState<PersonAction | null>(null);
+  const admin = useCurrentUser();
 
   const users = useQuery({ queryKey: keys.users('all'), queryFn: () => api.listUsers() });
-  const registrations = useRegistrations();
-
-  const bikeCounts = useMemo(() => {
-    const counts = new Map<string, number>();
-    (registrations.data ?? [])
-      .filter((view) => view.bike.status === 'active')
-      .forEach((view) => counts.set(view.owner.userId, (counts.get(view.owner.userId) ?? 0) + 1));
-    return counts;
-  }, [registrations.data]);
-
   const rows = useMemo(() => {
     const search = query.trim().toLowerCase();
     return (users.data ?? [])
@@ -53,42 +49,42 @@ export function PeoplePage() {
     <div className="flex flex-col gap-6">
       <PageHeader
         title="People"
-        description="Everyone with a BikeGuard account. Cards come from the existing NWU card system and are not issued here."
+        description="Manage BikeGuard accounts and access."
+        actions={
+          <Button icon={<UserPlus className="h-4 w-4" aria-hidden="true" />} onClick={() => setAdding(true)}>
+            Add a person
+          </Button>
+        }
       />
 
-      <Card>
-        <CardBody className="flex flex-col gap-4">
-          <Field label="Search people">
-            {({ id }) => (
-              <div className="relative max-w-md">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" aria-hidden="true" />
-                <Input
-                  id={id}
-                  className="pl-9"
-                  placeholder="Name, number or email"
-                  value={query}
-                  onChange={(event) => setQuery(event.target.value)}
-                />
-              </div>
-            )}
-          </Field>
-          <Tabs<Role | 'all'>
-            label="Filter by role"
-            value={role}
-            onChange={setRole}
-            options={[
-              { value: 'all', label: 'Everyone' },
-              { value: 'student', label: 'Students and staff' },
-              { value: 'guard', label: 'Guards' },
-              { value: 'admin', label: 'Administrators' },
-              
-            ]}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="relative min-w-0 flex-1">
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" aria-hidden="true" />
+          <Input
+            aria-label="Search people"
+            className="pl-9"
+            placeholder="Name, number or email"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
           />
-        </CardBody>
-      </Card>
+        </div>
+        <Select
+          aria-label="Role"
+          className="sm:w-56"
+          value={role}
+          onChange={(event) => setRole(event.target.value as Role | 'all')}
+        >
+          <option value="all">Everyone</option>
+          <option value="student">Students and staff</option>
+          <option value="guard">Guards</option>
+          <option value="admin">Administrators</option>
+        </Select>
+        <p aria-live="polite" className="whitespace-nowrap text-right text-sm font-medium text-ink-600">
+          {rows.length} {rows.length === 1 ? 'person' : 'people'}
+        </p>
+      </div>
 
       <Card>
-        <CardHeader title={`${rows.length} ${rows.length === 1 ? 'person' : 'people'}`} />
         <CardBody className={rows.length ? undefined : 'py-0'}>
           {users.isLoading && <SkeletonRows rows={5} className="py-4" />}
           {users.isError && <Alert tone="alert">{(users.error as Error).message}</Alert>}
@@ -99,11 +95,10 @@ export function PeoplePage() {
               <TableWrap>
                 <thead>
                   <tr>
-                    <Th>Name</Th>
-                    <Th>Number</Th>
+                    <Th>Person</Th>
                     <Th>Role</Th>
-                    <Th>Email</Th>
-                    <Th align="right">Bikes protected</Th>
+                    <Th>Status</Th>
+                    <Th align="right">Actions</Th>
                   </tr>
                 </thead>
                 <tbody>
@@ -111,17 +106,62 @@ export function PeoplePage() {
                     <tr key={user.userId} className="hover:bg-ink-50/60">
                       <Td>
                         <span className="flex items-center gap-2.5">
-                          <Avatar name={user.name} src={user.photoPath} size="sm" />
-                          <span className="font-medium text-ink-900">{user.name}</span>
+                          <Avatar name={user.name} src={user.photo.live} size="sm" />
+                          <span className="min-w-0">
+                            <span className="block font-medium text-ink-900">{user.name}</span>
+                            <span className="block text-xs text-ink-500">{user.studentStaffNumber}</span>
+                          </span>
                         </span>
                       </Td>
-                      <Td className="text-ink-700">{user.studentStaffNumber}</Td>
+                      <Td className="text-ink-700">{ROLE_LABEL[user.role]}</Td>
                       <Td>
-                        <Badge tone={user.role === 'student' ? 'neutral' : 'info'}>{ROLE_LABEL[user.role]}</Badge>
+                        <Badge tone={user.accountStatus === 'active' ? 'ok' : 'warn'}>
+                          {user.accountStatus === 'active' ? 'Active' : 'Deactivated'}
+                        </Badge>
                       </Td>
-                      <Td className="text-ink-600">{user.email}</Td>
-                      <Td align="right" className="text-ink-700">
-                        {bikeCounts.get(user.userId) ?? 0}
+                      <Td align="right">
+                        <ActionsMenu label={user.name} menuId={`person-actions-${user.userId}`}>
+                          <Button
+                            className="w-full justify-start"
+                            size="sm"
+                            variant="subtle"
+                            icon={<Pencil className="h-4 w-4" aria-hidden="true" />}
+                            onClick={() => setEditing(user)}
+                          >
+                            Edit
+                          </Button>
+                          {user.userId !== admin.userId && (
+                            <>
+                              {user.accountStatus === 'active' ? (
+                                <Button
+                                  className="w-full justify-start"
+                                  size="sm"
+                                  variant="warningOutline"
+                                  onClick={() => setAction({ kind: 'deactivate', person: user })}
+                                >
+                                  Deactivate
+                                </Button>
+                              ) : (
+                                <Button
+                                  className="w-full justify-start"
+                                  size="sm"
+                                  variant="secondary"
+                                  onClick={() => setAction({ kind: 'reactivate', person: user })}
+                                >
+                                  Reactivate
+                                </Button>
+                              )}
+                              <Button
+                                className="w-full justify-start"
+                                size="sm"
+                                variant="dangerOutline"
+                                onClick={() => setAction({ kind: 'remove', person: user })}
+                              >
+                                Remove
+                              </Button>
+                            </>
+                          )}
+                        </ActionsMenu>
                       </Td>
                     </tr>
                   ))}
@@ -129,7 +169,10 @@ export function PeoplePage() {
               </TableWrap>
             ))}
         </CardBody>
-      </Card>
+            </Card>
+      <AddPersonModal open={adding} onClose={() => setAdding(false)} />
+      <EditPersonModal person={editing} onClose={() => setEditing(null)} />
+      <PersonActionModal action={action} onClose={() => setAction(null)} />
     </div>
   );
 }

@@ -7,15 +7,20 @@ import type {
   DashboardStats,
   Gate,
   GateMode,
+  NewPerson,
   Notification,
+  PendingPhoto,
+  PersonEdit,
+  PhotoReviewResult,
+  PhotoTargetType,
   ReportBundle,
   Session,
   User,
 } from '@/types';
-import { mockApi, MockApiError, type BikeInput, type CrossingFilters } from '@/mocks/server';
+import { mockApi, MockApiError, type BikeInput, type CrossingFilters, type ProfileDetailsInput } from '@/mocks/server';
 import { API_BASE_URL, API_MODE, endpoints, TOKEN_STORAGE_KEY } from './endpoints';
 
-export type { BikeInput, CrossingFilters };
+export type { BikeInput, CrossingFilters, ProfileDetailsInput };
 
 export class ApiError extends Error {
   code: string;
@@ -57,7 +62,8 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...init,
     headers: {
-      'Content-Type': 'application/json',
+      // Only label the request as JSON when it actually carries a body; Fastify rejects an empty JSON body.
+      ...(init.body !== undefined ? { 'Content-Type': 'application/json' } : {}),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...init.headers,
     },
@@ -98,6 +104,19 @@ const liveApi = {
   getBike: (bikeId: string) => request<BikeView>(endpoints.bikes.detail(bikeId)),
   createBike: (ownerUserId: string, input: BikeInput, submit: boolean, _actorUserId: string) =>
     post<BikeView>(endpoints.bikes.create, { ownerUserId, ...input, submit }),
+  updateOwnDetails: (_actorUserId: string, input: ProfileDetailsInput) =>
+    patch<User>(endpoints.users.me, input),
+  changeOwnPassword: (_actorUserId: string, currentPassword: string, newPassword: string) =>
+    post<{ success: true }>(endpoints.users.password, { currentPassword, newPassword }),
+  submitProfilePhoto: (_actorUserId: string, dataUrl: string) =>
+    post<User>(endpoints.users.profilePhoto, { photoDataUrl: dataUrl }),
+  submitBikePhoto: (bikeId: string, _actorUserId: string, dataUrl: string) =>
+    post<BikeView>(endpoints.photos.bike(bikeId), { photoDataUrl: dataUrl }),
+  listPendingPhotos: (_adminUserId: string) => request<PendingPhoto[]>(endpoints.photos.pending),
+  approvePhoto: (targetType: PhotoTargetType, entityId: string, _adminUserId: string) =>
+    post<PhotoReviewResult>(endpoints.photos.approve(targetType, entityId)),
+  rejectPhoto: (targetType: PhotoTargetType, entityId: string, reason: string, _adminUserId: string) =>
+    post<PhotoReviewResult>(endpoints.photos.reject(targetType, entityId), { reason }),
   updateBike: (bikeId: string, input: Partial<BikeInput>, _actorUserId: string) =>
     patch<BikeView>(endpoints.bikes.detail(bikeId), input),
   submitBike: (bikeId: string, _actorUserId: string) => post<BikeView>(endpoints.bikes.submit(bikeId)),
@@ -110,8 +129,8 @@ const liveApi = {
   markNotificationRead: (notificationId: string) =>
     patch<void>(endpoints.users.notification(notificationId), { read: true }),
 
-  grantPermission: (bikeId: string, studentNumber: string, _actorUserId: string) =>
-    post<BikeView>(endpoints.bikes.permissions(bikeId), { studentNumber }),
+    grantPermission: (bikeId: string, studentNumber: string, _actorUserId: string, name?: string) =>
+    post<BikeView>(endpoints.bikes.permissions(bikeId), { studentNumber, name: name || undefined }),
   revokePermission: (permissionId: string, _actorUserId: string) =>
     request<BikeView>(endpoints.bikes.permission(permissionId), { method: 'DELETE' }),
 
@@ -163,6 +182,15 @@ const liveApi = {
     request<User[]>(`${endpoints.users.list}${query({ role })}`),
   findUserByNumber: (studentNumber: string) =>
     request<User | null>(endpoints.users.byNumber(studentNumber)),
+  createUser: (person: NewPerson, _adminUserId: string) => 
+    post<User>(endpoints.users.create, person),
+    updateUser: (userId: string, person: PersonEdit, _adminUserId: string) =>
+    patch<User>(endpoints.users.detail(userId), person),
+  deactivateUser: (userId: string, reason: string, _adminUserId: string) =>
+    post<User>(endpoints.users.deactivate(userId), reason ? { reason } : undefined),
+  reactivateUser: (userId: string, _adminUserId: string) => post<User>(endpoints.users.reactivate(userId)),
+  removeUser: (userId: string, _adminUserId: string) =>
+    request<void>(endpoints.users.detail(userId), { method: 'DELETE' }),
   listAudit: (limit = 40) =>
     request<Array<{ auditId: string; actorName: string; action: string; entityType: string; entityId: string; timestamp: string; detail: string }>>(
       `${endpoints.reporting.audit}${query({ limit })}`,
@@ -197,4 +225,14 @@ export const demo = {
   simulateCrossing: mockApi.simulateCrossing.bind(mockApi),
   simulateOutage: mockApi.simulateOutage.bind(mockApi),
   reset: mockApi.reset.bind(mockApi),
+};
+
+/** Dev-only reader emulator. Talks to the backend's /dev/simulate-crossing route. */
+export const devTools = {
+  enabled: API_MODE === 'live' && import.meta.env.DEV,
+  scan: (gateId: string, studentNumber: string | null, tagUid: string | null) =>
+    post<{ crossing: CrossingView; gateShouldOpen: boolean; alarmRaised: boolean }>(
+      endpoints.dev.simulateCrossing,
+      { gateId, studentNumber, tagUid },
+    ),
 };

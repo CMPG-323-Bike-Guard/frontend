@@ -66,7 +66,7 @@ export function formatBytes(bytes: number): string {
  * without putting a full identifier on a workstation in a public gatehouse.
  */
 export function shortRef(ref: string | null | undefined): string {
-  if (!ref) return '—';
+  if (!ref) return ', ';
   return ref.length <= 12 ? ref : `${ref.slice(0, 10)}…`;
 }
 
@@ -83,17 +83,19 @@ export function toCsv(rows: Array<Record<string, string | number | null>>): stri
   if (rows.length === 0) return '';
   const headers = Object.keys(rows[0]);
   const escape = (value: string | number | null) => {
-    const text = value === null || value === undefined ? '' : String(value);
-    return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+    let text = value === null || value === undefined ? '' : String(value);
+    if (typeof value === 'string' && /^[=+\-@]/.test(text)) text = `'${text}`;
+    return /[",\r\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
   };
   return [
+    'sep=,',
     headers.join(','),
     ...rows.map((row) => headers.map((header) => escape(row[header])).join(',')),
-  ].join('\n');
+  ].join('\r\n');
 }
 
 export function downloadCsv(filename: string, csv: string): void {
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const blob = new Blob(['\uFEFF', csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;

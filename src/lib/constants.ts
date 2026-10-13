@@ -9,6 +9,7 @@ import type {
 
 export const APP_NAME = 'BikeGuard';
 export const INSTITUTION = 'North-West University';
+export const PROFILE_PATH = '/profile';
 
 /** NFR-PER-01: the pairing check and gate release must complete in under 1.0s. */
 export const VERIFICATION_BUDGET_MS = 1000;

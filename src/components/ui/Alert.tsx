@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { AlertTriangle, CheckCircle2, Info, OctagonAlert } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Info, OctagonAlert, X } from 'lucide-react';
 import { cx } from '@/lib/cx';
 /**
  * Displays an informational, successful, warning, or critical message.
@@ -31,25 +31,49 @@ export function Alert({
   children,
   className,
   action,
+  variant = 'default',
+  onDismiss,
 }: {
   tone?: Tone;
   title?: ReactNode;
   children?: ReactNode;
   className?: string;
   action?: ReactNode;
+  variant?: 'default' | 'orange';
+  onDismiss?: () => void;
 }) {
   const isLive = tone === 'alert' || tone === 'warn';
+  const icon = variant === 'orange'
+    ? <AlertTriangle className="h-5 w-5 text-tag-notice-orange" />
+    : tones[tone].icon;
+
   return (
     <div
       role={isLive ? 'alert' : 'status'}
-      className={cx('flex gap-3 rounded-card border px-4 py-3', tones[tone].wrap, className)}
+      className={cx(
+        'flex gap-3 rounded-card border px-4 py-3',
+        variant === 'orange'
+          ? 'border-tag-notice-orange/40 bg-tag-notice-orange/10 text-ink-900'
+          : tones[tone].wrap,
+        className,
+      )}
     >
-      <span className="mt-0.5 shrink-0">{tones[tone].icon}</span>
+      <span className="mt-0.5 shrink-0">{icon}</span>
       <div className="min-w-0 flex-1 text-sm">
         {title && <p className="font-semibold text-ink-900">{title}</p>}
         {children && <div className={cx('prose-measure', title && 'mt-0.5')}>{children}</div>}
       </div>
       {action && <div className="shrink-0 self-center">{action}</div>}
+      {onDismiss && (
+        <button
+          type="button"
+          onClick={onDismiss}
+          aria-label="Dismiss notification"
+          className="shrink-0 self-start rounded-control p-1 cursor-pointer text-tag-notice-orange hover:bg-tag-notice-orange/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-tag-notice-orange"
+        >
+          <X className="h-4 w-4" aria-hidden="true" />
+        </button>
+      )}
     </div>
   );
 }

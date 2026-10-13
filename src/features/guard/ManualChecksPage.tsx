@@ -3,9 +3,11 @@ import { ClipboardList } from 'lucide-react';
 import { useCurrentUser } from '@/auth/AuthContext';
 import { useCrossings, useGates, useManualCrossing, useSetGateMode } from '@/api/queries';
 import { ApiError } from '@/api/client';
+import { GATE_HEALTH_META } from '@/lib/constants';
 import { durationSince, formatTime } from '@/lib/format';
 import { hasErrors, requireText, validateStudentNumber, type FieldErrors } from '@/lib/validation';
 import { Alert } from '@/components/ui/Alert';
+import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card, CardBody, CardHeader } from '@/components/ui/Card';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -14,7 +16,6 @@ import { Input, Select, Textarea } from '@/components/ui/Input';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { SkeletonRows } from '@/components/ui/Spinner';
 import { useToast } from '@/components/ui/Toast';
-import { GateHealthBadge } from '@/components/domain/StatusBadges';
 
 type FormField = 'gateId' | 'studentNumber' | 'bikeDescription';
 
@@ -81,7 +82,7 @@ export function ManualChecksPage() {
           {gates.isLoading ? (
             <SkeletonRows rows={2} className="py-4" />
           ) : (
-            <ul className="divide-y divide-ink-50">
+            <ul className="divide-y divide-ink-100">
               {(gates.data ?? []).map((gate) => (
                 <li key={gate.gateId} className="flex flex-wrap items-center justify-between gap-3 py-3">
                   <div>
@@ -93,10 +94,22 @@ export function ManualChecksPage() {
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
-                    <GateHealthBadge health={gate.health} />
+                    <Badge
+                      tone={GATE_HEALTH_META[gate.health].tone}
+                      variant={
+                        gate.health === 'good'
+                          ? 'tag-active'
+                          : gate.health === 'warning'
+                            ? 'gate-warning'
+                            : 'default'
+                      }
+                    >
+                      {GATE_HEALTH_META[gate.health].label}
+                    </Badge>
                     <Button
-                      variant={gate.mode === 'manual' ? 'primary' : 'secondary'}
+                      variant={gate.mode === 'manual' ? 'primary' : 'warningOutline'}
                       size="sm"
+                      className="cursor-pointer"
                       loading={setGateMode.isPending}
                       onClick={() =>
                         setGateMode.mutate({
@@ -118,7 +131,7 @@ export function ManualChecksPage() {
 
       {manualGates.length === 0 && (
         <Alert tone="info" title="Every gate is verifying automatically">
-          You can still log a crossing by hand if you need to — choose the gate below.
+          You can still log a crossing by hand if you need to ,  choose the gate below.
         </Alert>
       )}
 
@@ -214,7 +227,7 @@ export function ManualChecksPage() {
               />
             )}
             {manualLog.isSuccess && manualLog.data.length > 0 && (
-              <ul className="divide-y divide-ink-50">
+              <ul className="divide-y divide-ink-100">
                 {manualLog.data.map((row) => (
                   <li key={row.event.eventId} className="py-3">
                     <div className="flex flex-wrap items-center justify-between gap-2">

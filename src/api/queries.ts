@@ -1,6 +1,16 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { AlarmResolution, BikeStatus, GateMode } from '@/types';
-import { api, type BikeInput, type CrossingFilters } from './client';
+import type {
+  AlarmResolution,
+  BikeStatus,
+  GateMode,
+  NewPerson,
+  Notification,
+  PendingPhoto,
+  PersonEdit,
+  PhotoTargetType,
+} from '@/types';
+import { useAuth } from '@/auth/AuthContext';
+import { api, type BikeInput, type CrossingFilters, type ProfileDetailsInput } from './client';
 
 /** Query keys are namespaced so a mutation can invalidate exactly what changed. */
 export const keys = {
@@ -14,6 +24,7 @@ export const keys = {
   stats: ['stats'] as const,
   reports: (days: number) => ['reports', days] as const,
   users: (role?: string) => ['users', role ?? 'all'] as const,
+  pendingPhotos: ['photos', 'pending'] as const,
   audit: ['audit'] as const,
 };
 
@@ -45,8 +56,20 @@ export function useRegistrations(status?: BikeStatus) {
   return useQuery({ queryKey: keys.registrations(status), queryFn: () => api.listRegistrations(status) });
 }
 
-export function useNotifications(userId: string) {
-  return useQuery({ queryKey: keys.notifications(userId), queryFn: () => api.listNotifications(userId) });
+export function usePendingRegistrations(enabled = true) {
+  return useQuery({
+    queryKey: keys.registrations('pending_approval'),
+    queryFn: () => api.listRegistrations('pending_approval'),
+    enabled,
+  });
+}
+
+export function useNotifications(userId?: string) {
+  return useQuery({
+    queryKey: keys.notifications(userId ?? ''),
+    queryFn: () => api.listNotifications(userId!),
+    enabled: Boolean(userId),
+  });
 }
 
 export function useStats() {
@@ -59,6 +82,14 @@ export function useReports(days: number) {
 
 export function useAudit() {
   return useQuery({ queryKey: keys.audit, queryFn: () => api.listAudit() });
+}
+
+export function usePendingPhotos(adminUserId?: string) {
+  return useQuery({
+    queryKey: keys.pendingPhotos,
+    queryFn: () => api.listPendingPhotos(adminUserId!),
+    enabled: Boolean(adminUserId),
+  });
 }
 
 /** Broad invalidation after a write. Cheap here, and keeps every screen honest. */
@@ -115,8 +146,8 @@ export function useRemoveBike() {
 export function useGrantPermission() {
   const refresh = useRefresh();
   return useMutation({
-    mutationFn: (vars: { bikeId: string; studentNumber: string; actorUserId: string }) =>
-      api.grantPermission(vars.bikeId, vars.studentNumber, vars.actorUserId),
+        mutationFn: (vars: { bikeId: string; studentNumber: string; actorUserId: string; name?: string }) =>
+      api.grantPermission(vars.bikeId, vars.studentNumber, vars.actorUserId, vars.name),
     onSuccess: refresh,
   });
 }
@@ -227,10 +258,154 @@ export function useReplaceTag() {
   });
 }
 
-export function useMarkNotificationRead() {
+export function useCreateUser() {
   const refresh = useRefresh();
   return useMutation({
-    mutationFn: (notificationId: string) => api.markNotificationRead(notificationId),
+    mutationFn: (vars: { person: NewPerson; adminUserId: string }) => api.createUser(vars.person, vars.adminUserId),
     onSuccess: refresh,
+  });
+}
+
+export function useUpdateUser() {
+  const refresh = useRefresh();
+  return useMutation({
+    mutationFn: (vars: { userId: string; person: PersonEdit; adminUserId: string }) =>
+      api.updateUser(vars.userId, vars.person, vars.adminUserId),
+    onSuccess: refresh,
+  });
+}
+
+export function useDeactivateUser() {
+  const refresh = useRefresh();
+  return useMutation({
+    mutationFn: (vars: { userId: string; reason: string; adminUserId: string }) =>
+      api.deactivateUser(vars.userId, vars.reason, vars.adminUserId),
+    onSuccess: refresh,
+  });
+}
+
+export function useReactivateUser() {
+  const refresh = useRefresh();
+  return useMutation({
+    mutationFn: (vars: { userId: string; adminUserId: string }) => api.reactivateUser(vars.userId, vars.adminUserId),
+    onSuccess: refresh,
+  });
+}
+
+export function useRemoveUser() {
+  const refresh = useRefresh();
+  return useMutation({
+    mutationFn: (vars: { userId: string; adminUserId: string }) => api.removeUser(vars.userId, vars.adminUserId),
+    onSuccess: refresh,
+  });
+}
+
+export function useMarkNotificationRead() {
+  const client = useQueryClient();
+  const notificationQueries = { queryKey: ['notifications'] as const };
+  return useMutation({
+    mutationFn: (notificationId: string) => api.markNotificationRead(notificationId),
+    onMutate: async (notificationId) => {
+      await client.cancelQueries(notificationQueries);
+      const previous = client.getQueriesData<Notification[]>(notificationQueries);
+      client.setQueriesData<Notification[]>(notificationQueries, (current) =>
+        current?.map((notification) =>
+          notification.notificationId === notificationId
+            ? { ...notification, read: true }
+            : notification,
+        ),
+      );
+      return { previous };
+    },
+    onError: (_error, _notificationId, context) => {
+      context?.previous.forEach(([queryKey, notifications]) => {
+        client.setQueryData(queryKey, notifications);
+      });
+    },
+    onSettled: () => {
+      void client.invalidateQueries(notificationQueries);
+    },
+  });
+}
+
+export function useUpdateOwnDetails() {
+  const refresh = useRefresh();
+  const { updateCurrentUser } = useAuth();
+  return useMutation({
+    mutationFn: (vars: { actorUserId: string; input: ProfileDetailsInput }) =>
+      api.updateOwnDetails(vars.actorUserId, vars.input),
+    onSuccess: (user) => {
+      updateCurrentUser(user);
+      refresh();
+    },
+  });
+}
+
+export function useChangeOwnPassword() {
+  const refresh = useRefresh();
+  return useMutation({
+    mutationFn: (vars: { actorUserId: string; currentPassword: string; newPassword: string }) =>
+      api.changeOwnPassword(vars.actorUserId, vars.currentPassword, vars.newPassword),
+    onSuccess: refresh,
+  });
+}
+
+export function useSubmitProfilePhoto() {
+  const refresh = useRefresh();
+  const { updateCurrentUser } = useAuth();
+  return useMutation({
+    mutationFn: (vars: { actorUserId: string; photoDataUrl: string }) =>
+      api.submitProfilePhoto(vars.actorUserId, vars.photoDataUrl),
+    onSuccess: (user) => {
+      updateCurrentUser(user);
+      refresh();
+    },
+  });
+}
+
+export function useSubmitBikePhoto() {
+  const refresh = useRefresh();
+  return useMutation({
+    mutationFn: (vars: { bikeId: string; actorUserId: string; photoDataUrl: string }) =>
+      api.submitBikePhoto(vars.bikeId, vars.actorUserId, vars.photoDataUrl),
+    onSuccess: refresh,
+  });
+}
+
+export function useApprovePhoto() {
+  const refresh = useRefresh();
+  const client = useQueryClient();
+  const { user, updateCurrentUser } = useAuth();
+  return useMutation({
+    mutationFn: (vars: { targetType: PhotoTargetType; entityId: string; adminUserId: string }) =>
+      api.approvePhoto(vars.targetType, vars.entityId, vars.adminUserId),
+    onSuccess: (result) => {
+      client.setQueryData<PendingPhoto[]>(keys.pendingPhotos, (current) =>
+        current?.filter((item) => item.targetType !== result.targetType || item.entityId !== result.entityId),
+      );
+      if (result.targetType === 'user' && user?.userId === result.entityId) {
+        updateCurrentUser({ ...user, photo: result.photo, photoPath: result.photo.live });
+      }
+      refresh();
+    },
+  });
+}
+
+export function useRejectPhoto() {
+  const refresh = useRefresh();
+  const client = useQueryClient();
+  const { user, updateCurrentUser } = useAuth();
+  return useMutation({
+    mutationFn: (vars: { targetType: PhotoTargetType; entityId: string; reason: string; adminUserId: string }) =>
+      api.rejectPhoto(vars.targetType, vars.entityId, vars.reason, vars.adminUserId),
+    onSuccess: (result) => {
+      client.setQueryData<PendingPhoto[]>(keys.pendingPhotos, (current) =>
+        current?.filter((item) => item.targetType !== result.targetType || item.entityId !== result.entityId),
+      );
+      if (result.targetType === 'user' && user?.userId === result.entityId) {
+        updateCurrentUser({ ...user, photo: result.photo, photoPath: result.photo.live });
+      }
+      refresh();
+    },
   });
 }

@@ -23,8 +23,10 @@ import { ConnectionIndicator } from '@/components/domain/ConnectionIndicator';
 import { GateBoard } from '@/components/domain/GateBoard';
 import { ResultBadge } from '@/components/domain/StatusBadges';
 import { GateSimulator } from './GateSimulator';
+import { ReaderEmulator } from './ReaderEmulator';
+
 /**
- * Guard dashboard — UC-02, UC-03 and FR-SEC-01 to FR-SEC-06.
+ * Guard dashboard ,  UC-02, UC-03 and FR-SEC-01 to FR-SEC-06.
  *
  * Everything a guard needs while a rider is standing at the boom is on this
  * one screen: which gates are live, what the last decision was, and any alarm
@@ -41,7 +43,7 @@ export function GuardDashboardPage() {
   const acknowledgeAlarm = useAcknowledgeAlarm();
   const escalateAlarm = useEscalateAlarm();
 
-  const [selectedGateIds, setSelectedGateIds] = useState<string[]>([]);
+  const [selectedGateId, setSelectedGateId] = useState<string | null>(null);
   const [soundOn, setSoundOn] = useState(true);
   const [liveFeed, setLiveFeed] = useState<CrossingView[]>([]);
   const [lastResultByGate, setLastResultByGate] = useState<Record<string, 'match' | 'mismatch' | undefined>>({});
@@ -83,22 +85,25 @@ export function GuardDashboardPage() {
     if (recent.data && liveFeed.length === 0) setLiveFeed(recent.data.slice(0, 12));
   }, [recent.data, liveFeed.length]);
 
-  const commissioned = useMemo(() => (gates.data ?? []).filter((gate) => gate.commissioned), [gates.data]);
+  const gateList = gates.data ?? [];
+  const selectedGate = gateList.find((gate) => gate.gateId === selectedGateId);
+  const selectedGateAwaitingRollout = selectedGate !== undefined && !selectedGate.commissioned;
 
   const visibleAlarms = useMemo(
     () =>
       (alarms.data ?? []).filter(
-        (view) => selectedGateIds.length === 0 || selectedGateIds.includes(view.event.gateId),
+        (view) => selectedGateId === null || selectedGateId === view.event.gateId,
       ),
-    [alarms.data, selectedGateIds],
+    [alarms.data, selectedGateId],
   );
 
   const visibleFeed = useMemo(
-    () => liveFeed.filter((row) => selectedGateIds.length === 0 || selectedGateIds.includes(row.event.gateId)),
-    [liveFeed, selectedGateIds],
+    () => liveFeed.filter((row) => selectedGateId === null || selectedGateId === row.event.gateId),
+    [liveFeed, selectedGateId],
   );
 
-  const manualGates = (gates.data ?? []).filter((gate) => gate.mode === 'manual');
+  const manualGates = gateList.filter((gate) => gate.commissioned && gate.mode === 'manual');
+
   async function handleAcknowledge(alarmId: string) {
     try {
       await acknowledgeAlarm.mutateAsync({ alarmId, guardUserId: user.userId });
@@ -108,45 +113,37 @@ export function GuardDashboardPage() {
     }
   }
 
- 
-async function handleResolve(alarmId: string, outcome: Resolution, notes: string) {
-  try {
-    if (outcome === 'escalated') {
-      await escalateAlarm.mutateAsync({
-        alarmId,
-        notes,
-        guardUserId: user.userId,
-      });
+  async function handleResolve(alarmId: string, outcome: Resolution, notes: string) {
+    try {
+      if (outcome === 'escalated') {
+        await escalateAlarm.mutateAsync({
+          alarmId,
+          notes,
+          guardUserId: user.userId,
+        });
 
-      toast.confirm('Alarm escalated to Protection Services.');
-    } else {
-      await resolveAlarm.mutateAsync({
-        alarmId,
-        outcome,
-        notes,
-        guardUserId: user.userId,
-      });
+        toast.confirm('Alarm escalated to Protection Services.');
+      } else {
+        await resolveAlarm.mutateAsync({
+          alarmId,
+          outcome,
+          notes,
+          guardUserId: user.userId,
+        });
 
-      toast.confirm(
-        outcome === 'cleared_in_person'
-          ? 'Check recorded against the crossing.'
-          : 'Reported stolen. Protection Services can see the record.',
+        toast.confirm(
+          outcome === 'cleared_in_person'
+            ? 'Check recorded against the crossing.'
+            : 'Reported stolen. Protection Services can see the record.',
+        );
+      }
+    } catch (error) {
+      toast.problem(
+        error instanceof ApiError
+          ? error.message
+          : 'The alarm could not be updated.',
       );
     }
-  } catch (error) {
-    toast.problem(
-      error instanceof ApiError
-        ? error.message
-        : 'The alarm could not be updated.',
-    );
-  }
-}
-
-
-  function toggleGate(gateId: string) {
-    setSelectedGateIds((current) =>
-      current.includes(gateId) ? current.filter((id) => id !== gateId) : [...current, gateId],
-    );
   }
 
   return (
@@ -163,7 +160,7 @@ async function handleResolve(alarmId: string, outcome: Resolution, notes: string
           <div className="flex items-center gap-3">
             <ConnectionIndicator state={connection} />
             <Button
-              variant="secondary"
+              variant="subtle"
               size="sm"
               icon={soundOn ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
               onClick={() => setSoundOn((on) => !on)}
@@ -182,44 +179,40 @@ async function handleResolve(alarmId: string, outcome: Resolution, notes: string
       )}
 
       {manualGates.length > 0 && (
-        <Alert tone="warn" title={`${manualGates.length} gate${manualGates.length === 1 ? '' : 's'} on manual checks`}>
+        <Alert tone="warn" variant="orange" title={`${manualGates.length} gate${manualGates.length === 1 ? '' : 's'} on manual checks`}>
           Verify the card and the bike yourself and log each crossing so the record stays complete.
         </Alert>
       )}
 
       {/* FR-SEC-06 */}
-      {commissioned.length > 1 && (
+      {gateList.length > 1 && (
         <fieldset className="flex flex-wrap items-center gap-2">
           <legend className="sr-only">Filter the board by gate</legend>
           <span className="text-sm font-medium text-ink-600">Showing</span>
-          <button
+          <Button
             type="button"
-            onClick={() => setSelectedGateIds([])}
-            aria-pressed={selectedGateIds.length === 0}
-            className={cx(
-              'rounded-pill border px-3 py-1.5 text-sm font-semibold',
-              selectedGateIds.length === 0
-                ? 'border-ink-900 bg-ink-900 text-white'
-                : 'border-ink-200 bg-white text-ink-700 hover:bg-ink-50',
-            )}
+            onClick={() => setSelectedGateId(null)}
+            aria-pressed={selectedGateId === null}
+            size="sm"
+            variant={selectedGateId === null ? 'dark' : 'subtle'}
+            className={selectedGateId === null ? 'cursor-pointer border border-ink-900' : undefined}
           >
             All gates
-          </button>
-          {commissioned.map((gate) => {
-            const active = selectedGateIds.includes(gate.gateId);
+          </Button>
+          {gateList.map((gate) => {
+            const active = selectedGateId === gate.gateId;
             return (
-              <button
+              <Button
                 key={gate.gateId}
                 type="button"
-                onClick={() => toggleGate(gate.gateId)}
+                onClick={() => setSelectedGateId(gate.gateId)}
                 aria-pressed={active}
-                className={cx(
-                  'rounded-pill border px-3 py-1.5 text-sm font-semibold',
-                  active ? 'border-brand-500 bg-brand-50 text-brand-700' : 'border-ink-200 bg-white text-ink-700 hover:bg-ink-50',
-                )}
+                size="sm"
+                variant={active ? 'dark' : 'subtle'}
+                className={active ? 'cursor-pointer border border-ink-900' : undefined}
               >
                 {gate.name}
-              </button>
+              </Button>
             );
           })}
         </fieldset>
@@ -229,60 +222,73 @@ async function handleResolve(alarmId: string, outcome: Resolution, notes: string
         <SkeletonRows rows={3} />
       ) : (
         <GateBoard
-          gates={gates.data ?? []}
+          gates={gateList}
           lastResultByGate={lastResultByGate}
-          selectedGateIds={selectedGateIds}
+          selectedGateId={selectedGateId}
         />
       )}
 
-      <section className="grid gap-4 xl:grid-cols-[1.4fr_1fr]">
-        <div className="flex flex-col gap-3">
-          <div className="flex items-baseline justify-between">
+      <section className="grid gap-4 xl:grid-cols-[1.4fr_1fr] xl:gap-x-4 xl:gap-y-3">
+        <div className="flex flex-col gap-3 xl:contents">
+          <div className="flex items-baseline justify-between xl:col-start-1 xl:row-start-1">
             <h2 className="text-lg font-semibold">
               Alarms waiting for you
               {visibleAlarms.length > 0 && <span className="ml-2 text-alert-600">{visibleAlarms.length}</span>}
             </h2>
           </div>
 
-          {alarms.isLoading && <SkeletonRows rows={2} />}
+          <div className="flex flex-col gap-3 xl:col-start-1 xl:row-start-2">
+            {alarms.isLoading && <SkeletonRows rows={2} />}
 
-          {alarms.isSuccess && visibleAlarms.length === 0 && (
-            <Card>
-              <EmptyState
-                icon={<CheckCircle2 className="h-10 w-10 text-ok-500" />}
-                title="Nothing is waiting"
-                description="Every alarm raised so far has been checked and recorded. New ones appear here immediately."
+            {alarms.isSuccess && visibleAlarms.length === 0 && (
+              <Card>
+                <EmptyState
+                  icon={<CheckCircle2 className="h-10 w-10 text-ok-500" />}
+                  title={selectedGateAwaitingRollout ? `No alarms for ${selectedGate?.name}` : 'Nothing is waiting'}
+                  description={
+                    selectedGateAwaitingRollout
+                      ? 'This gate is awaiting rollout.'
+                      : 'Every alarm raised so far has been checked and recorded. New ones appear here immediately.'
+                  }
+                />
+              </Card>
+            )}
+
+            {visibleAlarms.map((view) => (
+              <AlarmCard
+                key={view.alarm.alarmId}
+                view={view}
+                onResolve={handleResolve}
+                resolving={resolveAlarm.isPending || escalateAlarm.isPending}
+                onAcknowledge={handleAcknowledge}
+                acknowledging={
+                  acknowledgeAlarm.isPending &&
+                  acknowledgeAlarm.variables?.alarmId === view.alarm.alarmId
+                }
               />
-            </Card>
-          )}
-
-          {visibleAlarms.map((view) => (
-           <AlarmCard
-            key={view.alarm.alarmId}
-            view={view}
-            onResolve={handleResolve}
-            resolving={resolveAlarm.isPending || escalateAlarm.isPending}
-            onAcknowledge={handleAcknowledge}
-            acknowledging={
-              acknowledgeAlarm.isPending &&
-              acknowledgeAlarm.variables?.alarmId === view.alarm.alarmId
-            }
-          />
-          ))}
+            ))}
+          </div>
         </div>
 
-        <Card className="h-fit">
+        <Card className="h-fit xl:col-start-2 xl:row-start-2">
           <CardHeader title="Live crossings" description="The most recent reads across the gates you are watching." />
           <CardBody className="py-0">
             {visibleFeed.length === 0 ? (
-              <EmptyState title="No crossings yet" description="Reads appear here the moment a card is tapped." />
+              <EmptyState
+                title={selectedGateAwaitingRollout ? `No crossings for ${selectedGate?.name}` : 'No crossings yet'}
+                description={
+                  selectedGateAwaitingRollout
+                    ? 'This gate is awaiting rollout.'
+                    : 'Reads appear here the moment a card is tapped.'
+                }
+              />
             ) : (
-              <ul className="divide-y divide-ink-50">
+              <ul className="divide-y divide-ink-100">
                 {visibleFeed.map((row) => (
                   <li key={row.event.eventId} className="flex items-center gap-3 py-2.5">
                     <span className="w-16 shrink-0 text-sm text-ink-500">{formatTime(row.event.timestamp)}</span>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium text-ink-900">{row.userName ?? 'Unidentified card'}</p>
+                      <p className="truncate text-sm font-medium text-ink-900">{row.userName ?? 'Unidentified person'}</p>
                       <p className="truncate text-xs text-ink-500">
                         {row.gateName} · {row.bikeName ?? row.event.note ?? 'no bike matched'}
                       </p>
@@ -308,6 +314,7 @@ async function handleResolve(alarmId: string, outcome: Resolution, notes: string
       </Card>
 
       <GateSimulator gates={gates.data ?? []} />
+      <ReaderEmulator gates={gates.data ?? []} />
     </div>
   );
 }
@@ -322,19 +329,19 @@ function ClosedAlarms() {
   }
 
   return (
-    <ul className="divide-y divide-ink-50">
+    <ul className="divide-y divide-ink-100">
       {closed.map((view) => (
         <li key={view.alarm.alarmId} className="py-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="text-sm font-medium text-ink-900">
-              {view.presentedUser?.name ?? 'Unidentified card'} · {view.gateName}
+              {view.presentedUser?.name ?? 'Unidentified person'} · {view.gateName}
             </p>
             <p className="text-sm text-ink-500">{relativeTime(view.alarm.resolvedAt ?? view.alarm.raisedAt)}</p>
           </div>
           <p className="mt-0.5 text-sm text-ink-600">
             {view.alarm.status === 'reported_stolen' ? 'Reported stolen' : 'Cleared in person'}
             {view.resolvedByName ? ` by ${view.resolvedByName}` : ''}
-            {view.alarm.notes ? ` — ${view.alarm.notes}` : ''}
+            {view.alarm.notes ? ` ,  ${view.alarm.notes}` : ''}
           </p>
         </li>
       ))}

@@ -19,7 +19,7 @@ export type Resolution = 'cleared_in_person' | 'reported_stolen' | 'escalated';
 /**
  * FR-SEC-04: the alarm shows the photo of the person whose card was tapped,
  * their number, the bike the tag is registered to and the bikes that person
- * has registered ,  everything a guard needs to decide without leaving the
+ * has registered, everything a guard needs to decide without leaving the
  * screen.
  */
 export function AlarmCard({
@@ -105,7 +105,7 @@ export function AlarmCard({
             <h3 className="text-sm font-semibold text-ink-500">Card presented</h3>
             {presentedUser ? (
               <div className="mt-2 flex items-center gap-3">
-                <Avatar name={presentedUser.name} src={presentedUser.photoPath} size="lg" />
+                <Avatar name={presentedUser.name} src={presentedUser.photo.live} size="lg" />
                 <div className="min-w-0">
                   <p className="truncate font-semibold text-ink-900">{presentedUser.name}</p>
                   <p className="text-sm text-ink-600">{presentedUser.studentStaffNumber}</p>
@@ -121,8 +121,8 @@ export function AlarmCard({
                 <ul className="mt-1.5 flex flex-wrap gap-2">
                   {ownerBikes.map((bike) => (
                     <li key={bike.bikeId} className="w-32">
-                      {bike.photoPath && (
-                        <img src={bike.photoPath} alt="" className="h-20 w-32 rounded-control object-cover" />
+                      {bike.photo.live && (
+                        <img src={bike.photo.live} alt="" className="h-20 w-32 rounded-control object-cover" />
                       )}
                       <p className="mt-1 truncate text-xs font-medium text-ink-700">{bike.name}</p>
                     </li>
@@ -137,9 +137,9 @@ export function AlarmCard({
             <p className="mt-2 text-sm text-ink-600">Tag {event.tagRef ?? 'not read'}</p>
             {tagBike ? (
               <div className="mt-2">
-                {tagBike.photoPath && (
+                {tagBike.photo.live && (
                   <img
-                    src={tagBike.photoPath}
+                    src={tagBike.photo.live}
                     alt={`${tagBike.name}, a ${tagBike.colour} ${tagBike.makeModel}`}
                     className="h-28 w-44 rounded-control object-cover"
                   />
@@ -222,7 +222,7 @@ export function AlarmCard({
             </Button>
             {alarm.status !== 'escalated' && (
               <Button
-                variant="secondary"
+                variant="subtle"
                 icon={<ArrowUpRight className="h-4 w-4" />}
                 onClick={() => setDialog('escalated')}
               >
@@ -257,11 +257,11 @@ export function AlarmCard({
         description="Your name and the time are recorded against this crossing. The original result is not changed."
         footer={
           <>
-            <Button variant="secondary" className="w-32" onClick={() => setDialog(null)}>
+            <Button variant="subtle" className="w-32" onClick={() => setDialog(null)}>
               Cancel
             </Button>
             <Button
-              variant={dialog === 'cleared_in_person' ? 'primary' : 'danger'}
+              variant={dialog === 'cleared_in_person' ? 'primary' : 'dangerOutline'}
               className="w-32"
               loading={resolving}
               onClick={submit}
