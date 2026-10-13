@@ -10,6 +10,7 @@ import type {
   NewPerson,
   Notification,
   PendingPhoto,
+  PersonEdit,
   PhotoReviewResult,
   PhotoTargetType,
   ReportBundle,
@@ -172,6 +173,13 @@ const liveApi = {
     request<User | null>(endpoints.users.byNumber(studentNumber)),
   createUser: (person: NewPerson, _adminUserId: string) => 
     post<User>(endpoints.users.create, person),
+    updateUser: (userId: string, person: PersonEdit, _adminUserId: string) =>
+    patch<User>(endpoints.users.detail(userId), person),
+  deactivateUser: (userId: string, reason: string, _adminUserId: string) =>
+    post<User>(endpoints.users.deactivate(userId), reason ? { reason } : undefined),
+  reactivateUser: (userId: string, _adminUserId: string) => post<User>(endpoints.users.reactivate(userId)),
+  removeUser: (userId: string, _adminUserId: string) =>
+    request<void>(endpoints.users.detail(userId), { method: 'DELETE' }),
   listAudit: (limit = 40) =>
     request<Array<{ auditId: string; actorName: string; action: string; entityType: string; entityId: string; timestamp: string; detail: string }>>(
       `${endpoints.reporting.audit}${query({ limit })}`,

@@ -57,6 +57,9 @@ export const endpoints = {
   users: {
     list: '/users',
     create: '/users',
+    detail: (userId: string) => `/users/${userId}`,
+    deactivate: (userId: string) => `/users/${userId}/deactivate`,
+    reactivate: (userId: string) => `/users/${userId}/reactivate`,
     me: '/users/me',
     password: '/users/me/password',
     profilePhoto: '/users/me/photo',

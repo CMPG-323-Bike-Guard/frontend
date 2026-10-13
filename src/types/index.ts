@@ -87,6 +87,14 @@ export interface NewPerson {
   password: string;
 }
 
+export interface PersonEdit {
+  studentStaffNumber: string;
+  name: string;
+  email: string;
+  phone: string;
+  role: Role;
+}
+
 export interface User {
   userId: string;
   studentStaffNumber: string;

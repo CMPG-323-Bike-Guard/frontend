@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react';
-import { Search, UserPlus } from 'lucide-react';
-import type { Role } from '@/types';
+import { Pencil, Search, UserPlus } from 'lucide-react';
+import type { Role, User } from '@/types';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/api/client';
 import { keys, useRegistrations } from '@/api/queries';
+import { useCurrentUser } from '@/auth/AuthContext';
 import { ROLE_LABEL } from '@/lib/constants';
 import { Alert } from '@/components/ui/Alert';
 import { Avatar } from '@/components/ui/Avatar';
@@ -18,6 +19,8 @@ import { SkeletonRows } from '@/components/ui/Spinner';
 import { TableWrap, Td, Th } from '@/components/ui/Table';
 import { Tabs } from '@/components/ui/Tabs';
 import { AddPersonModal } from './AddPersonModal';
+import { EditPersonModal } from './EditPersonModal';
+import { PersonActionModal, type PersonAction } from './PersonActionModal';
 
 /**
  * * BikeGuard reads the existing NWU card system and does not issue or replace
@@ -29,6 +32,9 @@ export function PeoplePage() {
   const [role, setRole] = useState<Role | 'all'>('all');
   const [query, setQuery] = useState('');
   const [adding, setAdding] = useState(false);
+    const [editing, setEditing] = useState<User | null>(null);
+  const [action, setAction] = useState<PersonAction | null>(null);
+  const admin = useCurrentUser();
 
   const users = useQuery({ queryKey: keys.users('all'), queryFn: () => api.listUsers() });
   const registrations = useRegistrations();
@@ -102,14 +108,16 @@ export function PeoplePage() {
             (rows.length === 0 ? (
               <EmptyState title="Nobody matches" description="Clear the search or choose another role." />
             ) : (
-              <TableWrap>
+                            <TableWrap>
                 <thead>
                   <tr>
                     <Th>Name</Th>
                     <Th>Number</Th>
                     <Th>Role</Th>
                     <Th>Email</Th>
+                    <Th>Status</Th>
                     <Th align="right">Bikes protected</Th>
+                    <Th align="right">Actions</Th>
                   </tr>
                 </thead>
                 <tbody>
@@ -126,8 +134,53 @@ export function PeoplePage() {
                         <Badge tone={user.role === 'student' ? 'neutral' : 'info'}>{ROLE_LABEL[user.role]}</Badge>
                       </Td>
                       <Td className="text-ink-600">{user.email}</Td>
+                      <Td>
+                        <Badge tone={user.accountStatus === 'active' ? 'ok' : 'warn'}>
+                          {user.accountStatus === 'active' ? 'Active' : 'Deactivated'}
+                        </Badge>
+                      </Td>
                       <Td align="right" className="text-ink-700">
                         {bikeCounts.get(user.userId) ?? 0}
+                      </Td>
+                      <Td align="right">
+                        <span className="flex justify-end gap-2">
+                          <Button
+                            size="sm"
+                            variant="subtle"
+                            icon={<Pencil className="h-4 w-4" aria-hidden="true" />}
+                            onClick={() => setEditing(user)}
+                          >
+                            Edit
+                          </Button>
+                          {user.userId !== admin.userId && (
+                            <>
+                              {user.accountStatus === 'active' ? (
+                                <Button
+                                  size="sm"
+                                  variant="warningOutline"
+                                  onClick={() => setAction({ kind: 'deactivate', person: user })}
+                                >
+                                  Deactivate
+                                </Button>
+                              ) : (
+                                <Button
+                                  size="sm"
+                                  variant="secondary"
+                                  onClick={() => setAction({ kind: 'reactivate', person: user })}
+                                >
+                                  Reactivate
+                                </Button>
+                              )}
+                              <Button
+                                size="sm"
+                                variant="dangerOutline"
+                                onClick={() => setAction({ kind: 'remove', person: user })}
+                              >
+                                Remove
+                              </Button>
+                            </>
+                          )}
+                        </span>
                       </Td>
                     </tr>
                   ))}
@@ -137,6 +190,8 @@ export function PeoplePage() {
         </CardBody>
             </Card>
       <AddPersonModal open={adding} onClose={() => setAdding(false)} />
+      <EditPersonModal person={editing} onClose={() => setEditing(null)} />
+      <PersonActionModal action={action} onClose={() => setAction(null)} />
     </div>
   );
 }

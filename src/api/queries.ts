@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { AlarmStatus, BikeStatus, GateMode, NewPerson, Notification, PendingPhoto, PhotoTargetType } from '@/types';
+import type { AlarmStatus, BikeStatus, GateMode, NewPerson, Notification, PendingPhoto, PersonEdit, PhotoTargetType } from '@/types';
 import { useAuth } from '@/auth/AuthContext';
 import { api, type BikeInput, type CrossingFilters, type ProfileDetailsInput } from './client';
 
@@ -225,6 +225,40 @@ export function useCreateUser() {
   const refresh = useRefresh();
   return useMutation({
     mutationFn: (vars: { person: NewPerson; adminUserId: string }) => api.createUser(vars.person, vars.adminUserId),
+    onSuccess: refresh,
+  });
+}
+
+export function useUpdateUser() {
+  const refresh = useRefresh();
+  return useMutation({
+    mutationFn: (vars: { userId: string; person: PersonEdit; adminUserId: string }) =>
+      api.updateUser(vars.userId, vars.person, vars.adminUserId),
+    onSuccess: refresh,
+  });
+}
+
+export function useDeactivateUser() {
+  const refresh = useRefresh();
+  return useMutation({
+    mutationFn: (vars: { userId: string; reason: string; adminUserId: string }) =>
+      api.deactivateUser(vars.userId, vars.reason, vars.adminUserId),
+    onSuccess: refresh,
+  });
+}
+
+export function useReactivateUser() {
+  const refresh = useRefresh();
+  return useMutation({
+    mutationFn: (vars: { userId: string; adminUserId: string }) => api.reactivateUser(vars.userId, vars.adminUserId),
+    onSuccess: refresh,
+  });
+}
+
+export function useRemoveUser() {
+  const refresh = useRefresh();
+  return useMutation({
+    mutationFn: (vars: { userId: string; adminUserId: string }) => api.removeUser(vars.userId, vars.adminUserId),
     onSuccess: refresh,
   });
 }
