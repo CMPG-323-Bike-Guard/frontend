@@ -20,6 +20,11 @@ export interface NavItem {
   end?: boolean;
 }
 
+export interface NavGroup {
+  label?: string;
+  items: NavItem[];
+}
+
 /** Navigation is derived from the signed-in role, never from a stored flag.
  * 
  * Role-based application navigation
@@ -37,28 +42,44 @@ export interface NavItem {
  * 
  * 
  */
-export const NAVIGATION: Record<Role, NavItem[]> = {
+export const NAVIGATION: Record<Role, NavGroup[]> = {
   student: [
-    { to: '/my-bikes', label: 'My bikes', icon: BikeIcon, end: true },
-    { to: '/my-bikes/register', label: 'Register a bike', icon: Tag },
-    { to: '/notifications', label: 'Notifications', icon: Bell },
+    { items: [
+      { to: '/my-bikes', label: 'My bikes', icon: BikeIcon, end: true },
+      { to: '/my-bikes/register', label: 'Register a bike', icon: Tag },
+      { to: '/notifications', label: 'Notifications', icon: Bell },
+    ] },
   ],
   guard: [
-    { to: '/guard', label: 'Gate board', icon: MonitorCheck, end: true },
-    { to: '/guard/manual', label: 'Manual checks', icon: ClipboardList },
-    { to: '/guard/crossings', label: 'Crossing log', icon: ScrollText },
-    { to: '/notifications', label: 'Notifications', icon: Bell },
+    { items: [
+      { to: '/guard', label: 'Gate board', icon: MonitorCheck, end: true },
+      { to: '/guard/manual', label: 'Manual checks', icon: ClipboardList },
+      { to: '/guard/crossings', label: 'Crossing log', icon: ScrollText },
+      { to: '/notifications', label: 'Notifications', icon: Bell },
+    ] },
   ],
   admin: [
-    { to: '/admin', label: 'Overview', icon: LayoutDashboard, end: true },
-    { to: '/admin/registrations', label: 'Registrations', icon: ShieldCheck },
-    { to: '/admin/tags', label: 'Tags', icon: Tag },
-    { to: '/admin/crossings', label: 'Crossing log', icon: ScrollText },
-    { to: '/admin/people', label: 'People', icon: Users },
-    { to: '/admin/photo-reviews', label: 'Photo reviews', icon: Images },
-    { to: '/admin/audit', label: 'Audit trail', icon: ClipboardList },
-    { to: '/reports', label: 'Reports', icon: FileBarChart },
-    { to: '/notifications', label: 'Notifications', icon: Bell },
+    {
+      label: 'Operations',
+      items: [
+        { to: '/admin', label: 'Overview', icon: LayoutDashboard, end: true },
+        { to: '/admin/registrations', label: 'Registrations', icon: ShieldCheck },
+        { to: '/admin/tags', label: 'Tags', icon: Tag },
+        { to: '/admin/crossings', label: 'Crossing log', icon: ScrollText },
+        { to: '/notifications', label: 'Notifications', icon: Bell },
+      ],
+    },
+    {
+      label: 'People and records',
+      items: [
+        { to: '/admin/people', label: 'People', icon: Users },
+        { to: '/admin/photo-reviews', label: 'Photo reviews', icon: Images },
+        { to: '/admin/audit', label: 'Audit trail', icon: ClipboardList },
+      ],
+    },
+    {
+      label: 'Insights',
+      items: [{ to: '/reports', label: 'Reports', icon: FileBarChart }],
+    },
   ],
- 
 };
