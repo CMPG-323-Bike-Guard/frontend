@@ -14,9 +14,12 @@
   --color-signal-500: #6C3D91;
   --color-tag-notice-orange: #C2410C;
   --color-tag-status-green: #16A34A;
-  --color-action-red: #B91C1C;
+    --color-action-red: #B91C1C;
   --color-action-red-tint: #FEF2F2;
   --color-action-red-tint-hover: #FEE2E2;
+  --color-alert-100: #FEE2E2;
+  --color-alert-500: #DC2626;
+  --color-alert-600: #B91C1C;
   --color-gate-warning-border: #DC2626;
   --color-gate-warning-background: #FEE2E2;
   --color-sidebar-unread: #FFC1AD;
