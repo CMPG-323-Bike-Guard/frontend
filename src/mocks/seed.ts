@@ -260,68 +260,121 @@ export function buildSeed() {
       };
       events.push(event);
 
-      if (isMismatch) {
-        const resolvedStolen = random() > 0.8;
-        alarms.push({
-          alarmId: nextId('a'),
-          eventId: event.eventId,
-          status: resolvedStolen ? 'reported_stolen' : 'cleared_in_person',
-          raisedAt: event.timestamp,
-          escalatedAt: null,
-          resolvedByUserId: random() > 0.5 ? 'u-201' : 'u-202',
-          resolvedAt: new Date(new Date(event.timestamp).getTime() + 4 * 60_000).toISOString(),
-          notes: resolvedStolen
-            ? 'Rider could not describe the bike. Bike held at the gatehouse and Protection Services called.'
-            : 'Rider produced the registration on the portal. Same person, replacement tag not yet fitted.',
-        });
-      }
+     
+if (isMismatch) {
+  const resolvedStolen = random() > 0.8;
+  const guardId = random() > 0.5 ? 'u-201' : 'u-202';
+
+  alarms.push({
+    alarmId: nextId('a'),
+    eventId: event.eventId,
+    status: resolvedStolen ? 'reported_stolen' : 'cleared_in_person',
+    raisedAt: event.timestamp,
+    acknowledgeBy: new Date(
+      new Date(event.timestamp).getTime() + 2 * 60_000,
+    ).toISOString(),
+    acknowledgedAt: new Date(
+      new Date(event.timestamp).getTime() + 40_000,
+    ).toISOString(),
+    acknowledgedByUserId: guardId,
+    escalatedAt: null,
+    escalationReason: null,
+    resolvedByUserId: guardId,
+    resolvedAt: new Date(
+      new Date(event.timestamp).getTime() + 4 * 60_000,
+    ).toISOString(),
+    notes: resolvedStolen
+      ? 'Rider could not describe the bike. Bike held at the gatehouse and Protection Services called.'
+      : 'Rider produced the registration on the portal. Same person, replacement tag not yet fitted.',
+  });
+}
+
     }
   }
 
-  // Three alarms left open so the guard dashboard has live work on first load.
-  const openAlarmSpecs: Array<{
-    userId: string;
-    tagRef: string;
-    reason: MismatchReason;
-    minutesAgo: number;
-    gateId: string;
-    status: Alarm['status'];
-  }> = [
-    { userId: 'u-102', tagRef: 'BG-1C55D8', reason: 'tag_registered_to_other_user', minutesAgo: 4, gateId: 'g-1', status: 'open' },
-    { userId: 'u-106', tagRef: 'BG-63AD07', reason: 'tag_reported_lost', minutesAgo: 21, gateId: 'g-2', status: 'open' },
-    { userId: 'u-108', tagRef: 'BG-B41D77', reason: 'tag_not_registered', minutesAgo: 63, gateId: 'g-1', status: 'escalated' },
-  ];
+// Three alarms left open so the guard dashboard has live work on first load. 
+const openAlarmSpecs: Array<{
+  userId: string;
+  tagRef: string;
+  reason: MismatchReason;
+  minutesAgo: number;
+  gateId: string;
+  status: Extract<Alarm['status'], 'pending' | 'acknowledged' | 'escalated'>;
+}> = [
+  {
+    userId: 'u-102',
+    tagRef: 'BG-1C55D8',
+    reason: 'tag_registered_to_other_user',
+    minutesAgo: 0.5,
+    gateId: 'g-1',
+    status: 'pending',
+  },
+  {
+    userId: 'u-106',
+    tagRef: 'BG-63AD07',
+    reason: 'tag_reported_lost',
+    minutesAgo: 21,
+    gateId: 'g-2',
+    status: 'acknowledged',
+  },
+  {
+    userId: 'u-108',
+    tagRef: 'BG-B41D77',
+    reason: 'tag_not_registered',
+    minutesAgo: 63,
+    gateId: 'g-1',
+    status: 'escalated',
+  },
+];
 
-  openAlarmSpecs.forEach((spec) => {
-    const card = cardByUser.get(spec.userId) ?? null;
-    const event: GateEvent = {
-      eventId: nextId('e'),
-      timestamp: iso(spec.minutesAgo * 60_000),
-      gateId: spec.gateId,
-      userId: spec.userId,
-      bikeId: null,
-      cardRef: card?.cardRef ?? null,
-      tagRef: spec.tagRef,
-      result: 'mismatch',
-      mismatchReason: spec.reason,
-      source: 'automated',
-      guardUserId: null,
-      verificationMs: 210 + Math.floor(Math.random() * 120),
-      offline: false,
-      note: null,
-    };
-    events.push(event);
-    alarms.push({
-      alarmId: nextId('a'),
-      eventId: event.eventId,
-      status: spec.status,
-      raisedAt: event.timestamp,
-      escalatedAt: spec.status === 'escalated' ? iso((spec.minutesAgo - 3) * 60_000) : null,
-      resolvedByUserId: null,
-      resolvedAt: null,
-      notes: null,
-    });
+
+  
+openAlarmSpecs.forEach((spec) => {
+  const card = cardByUser.get(spec.userId) ?? null;
+
+  const event: GateEvent = {
+    eventId: nextId('e'),
+    timestamp: iso(spec.minutesAgo * 60_000),
+    gateId: spec.gateId,
+    userId: spec.userId,
+    bikeId: null,
+    cardRef: card?.cardRef ?? null,
+    tagRef: spec.tagRef,
+    result: 'mismatch',
+    mismatchReason: spec.reason,
+    source: 'automated',
+    guardUserId: null,
+    verificationMs: 210 + Math.floor(Math.random() * 120),
+    offline: false,
+    note: null,
+  };
+
+  events.push(event);
+
+  alarms.push({
+    alarmId: nextId('a'),
+    eventId: event.eventId,
+    status: spec.status,
+    raisedAt: event.timestamp,
+    acknowledgeBy: iso((spec.minutesAgo - 2) * 60_000),
+    acknowledgedAt:
+      spec.status === 'acknowledged'
+        ? iso((spec.minutesAgo - 1) * 60_000)
+        : null,
+    acknowledgedByUserId:
+      spec.status === 'acknowledged' ? 'u-201' : null,
+    escalatedAt:
+      spec.status === 'escalated'
+        ? iso((spec.minutesAgo - 2) * 60_000)
+        : null,
+    escalationReason:
+      spec.status === 'escalated' ? 'no_acknowledgement' : null,
+    resolvedByUserId: null,
+    resolvedAt: null,
+    notes: null,
   });
+});
+
 
   events.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
 

@@ -47,10 +47,14 @@ export const endpoints = {
     list: '/crossings',
     manual: '/crossings/manual',
   },
+  
   alarms: {
     list: '/alarms',
+    acknowledge: (alarmId: string) => `/alarms/${alarmId}/acknowledge`,
+    escalate: (alarmId: string) => `/alarms/${alarmId}/escalate`,
     resolve: (alarmId: string) => `/alarms/${alarmId}/resolution`,
   },
+
   users: {
     list: '/users',
     byNumber: (studentNumber: string) => `/users/lookup/${studentNumber}`,

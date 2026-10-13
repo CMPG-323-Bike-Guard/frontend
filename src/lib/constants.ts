@@ -83,12 +83,35 @@ export const GATE_HEALTH_META: Record<GateHealth, { label: string; tone: Tone }>
   not_commissioned: { label: 'Not commissioned', tone: 'neutral' },
 };
 
+
 export const ALARM_STATUS_META: Record<AlarmStatus, { label: string; tone: Tone }> = {
-  open: { label: 'Open', tone: 'alert' },
+  pending: { label: 'Pending', tone: 'alert' },
+  acknowledged: { label: 'Acknowledged', tone: 'warn' },
   escalated: { label: 'Escalated', tone: 'alert' },
-  cleared_in_person: { label: 'Cleared in person', tone: 'ok' },
-  reported_stolen: { label: 'Reported stolen', tone: 'alert' },
+  cleared_in_person: { label: 'Resolved · cleared in person', tone: 'ok' },
+  reported_stolen: { label: 'Resolved · reported stolen', tone: 'alert' },
 };
+
+/**
+ * Response timer: how long a guard has to acknowledge a new alarm before it is
+ * escalated to the supervisor. The server is the authority (it stamps
+ * `acknowledgeBy` on every alarm); this value is what the mock server uses.
+ */
+export const ALARM_ACK_TIMEOUT_MS = 2 * 60_000;
+
+/** Below this many seconds the countdown turns urgent. */
+export const ALARM_ACK_WARNING_SECONDS = 30;
+
+/** Alarms that still need someone at the gate. */
+export const LIVE_ALARM_STATUSES: readonly AlarmStatus[] = [
+  'pending',
+  'acknowledged',
+  'escalated',
+];
+
+export const isLiveAlarm = (status: AlarmStatus) =>
+  LIVE_ALARM_STATUSES.includes(status);
+
 
 /**
  * UC-03 error flow: an unknown tag is presented differently from a tag that

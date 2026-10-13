@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { ArrowUpRight, ShieldCheck, Siren } from 'lucide-react';
+import { ArrowUpRight, Eye, ShieldCheck, Siren } from 'lucide-react';
 import type { AlarmView } from '@/types';
-import { MISMATCH_REASON_META } from '@/lib/constants';
-import { formatDateTime, relativeTime, shortRef } from '@/lib/format';
+import { isLiveAlarm, MISMATCH_REASON_META } from '@/lib/constants';
+import { formatDateTime, relativeTime } from '@/lib/format';
 import { cx } from '@/lib/cx';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
@@ -11,24 +11,30 @@ import { Textarea } from '@/components/ui/Input';
 import { Avatar } from '@/components/ui/Avatar';
 import { AlarmStatusBadge } from './StatusBadges';
 import { MismatchNote } from './MismatchNote';
+import { AlarmCountdown } from './AlarmCountdown';
+import { AlarmTimeline } from './AlarmTimeline';
 
 export type Resolution = 'cleared_in_person' | 'reported_stolen' | 'escalated';
 
 /**
  * FR-SEC-04: the alarm shows the photo of the person whose card was tapped,
  * their number, the bike the tag is registered to and the bikes that person
- * has registered — everything a guard needs to decide without leaving the
+ * has registered ,  everything a guard needs to decide without leaving the
  * screen.
  */
 export function AlarmCard({
   view,
   onResolve,
   resolving,
+  onAcknowledge,
+  acknowledging,
   compact = false,
 }: {
   view: AlarmView;
   onResolve?(alarmId: string, outcome: Resolution, notes: string): Promise<void>;
   resolving?: boolean;
+  onAcknowledge?(alarmId: string): Promise<void>;
+  acknowledging?: boolean;
   compact?: boolean;
 }) {
   const [dialog, setDialog] = useState<Resolution | null>(null);
@@ -36,7 +42,8 @@ export function AlarmCard({
   const [notesError, setNotesError] = useState<string | undefined>();
 
   const { alarm, event, presentedUser, registeredOwner, tagBike, ownerBikes, gateName } = view;
-  const live = alarm.status === 'open' || alarm.status === 'escalated';
+  const live = isLiveAlarm(alarm.status);
+  const acknowledged = Boolean(alarm.acknowledgedAt);
   const risk = event.mismatchReason ? MISMATCH_REASON_META[event.mismatchReason].risk : 'low';
 
   async function submit() {
@@ -63,17 +70,32 @@ export function AlarmCard({
       <header
         className={cx(
           'flex flex-wrap items-center justify-between gap-2 rounded-t-card px-4 py-2.5',
-          live && risk === 'high' ? 'bg-alert-500 text-white' : live ? 'bg-warn-500 text-white' : 'bg-ink-50 text-ink-700',
+          live ? 'border-b border-action-red bg-action-red-tint text-ink-900' : 'bg-ink-50 text-ink-700',
         )}
       >
         <p className="flex items-center gap-2 text-sm font-semibold">
           {live && <Siren className="h-4 w-4" aria-hidden="true" />}
           Gate held · {gateName}
         </p>
-        <p className="text-sm">
-          {relativeTime(alarm.raisedAt)} · {formatDateTime(alarm.raisedAt)}
-        </p>
+        <div className="flex flex-wrap items-center gap-2">
+          {live && <AlarmStatusBadge status={alarm.status} />}
+          {alarm.status === 'pending' && <AlarmCountdown deadline={alarm.acknowledgeBy} />}
+          <p className="text-sm text-ink-500">
+            {relativeTime(alarm.raisedAt)} · {formatDateTime(alarm.raisedAt)}
+          </p>
+        </div>
       </header>
+
+      {alarm.status === 'escalated' && (
+        <p className="border-b border-alert-500/30 bg-alert-100 px-4 py-2 text-sm font-medium text-alert-600">
+          {alarm.escalationReason === 'no_acknowledgement'
+            ? 'Nobody acknowledged this alarm in time. The supervisor has been notified.'
+            : 'A guard asked for help. The supervisor has been notified.'}
+          {acknowledged && view.acknowledgedByName
+            ? ` ${view.acknowledgedByName} is now on it.`
+            : ''}
+        </p>
+      )}
 
       <div className="px-4 py-4">
         <MismatchNote reason={event.mismatchReason} />
@@ -87,7 +109,6 @@ export function AlarmCard({
                 <div className="min-w-0">
                   <p className="truncate font-semibold text-ink-900">{presentedUser.name}</p>
                   <p className="text-sm text-ink-600">{presentedUser.studentStaffNumber}</p>
-                  <p className="text-sm text-ink-500">Card {shortRef(event.cardRef)}</p>
                 </div>
               </div>
             ) : (
@@ -157,25 +178,69 @@ export function AlarmCard({
           </div>
         )}
 
-        {live && onResolve && (
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Button icon={<ShieldCheck className="h-4 w-4" />} onClick={() => setDialog('cleared_in_person')}>
-              Checked in person — all clear
+        {/* Step 1: the guard must acknowledge before they can record an outcome. */}
+        {live && !acknowledged && onAcknowledge && (
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <Button
+              icon={<Eye className="h-4 w-4" />}
+              loading={acknowledging}
+              onClick={() => void onAcknowledge(alarm.alarmId)}
+            >
+              Acknowledge alarm
             </Button>
-            <Button variant="danger" icon={<Siren className="h-4 w-4" />} onClick={() => setDialog('reported_stolen')}>
+            <p className="text-sm text-ink-500">
+              {alarm.status === 'escalated'
+                ? 'Acknowledge to let the supervisor know someone is now at the gate.'
+                : 'Unacknowledged alarms are escalated to the supervisor automatically.'}
+            </p>
+          </div>
+        )}
+
+        {live && acknowledged && view.acknowledgedByName && alarm.status !== 'escalated' && (
+          <p className="mt-4 text-sm text-ink-500">
+            Acknowledged by <span className="font-semibold text-ink-900">{view.acknowledgedByName}</span>
+            {alarm.acknowledgedAt ? ` · ${relativeTime(alarm.acknowledgedAt)}` : ''}
+          </p>
+        )}
+
+        {/* Step 2: record what was found (Resolved), or ask for help (Escalated). */}
+        {live && acknowledged && onResolve && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button
+              icon={<ShieldCheck className="h-4 w-4" />}
+              onClick={() => setDialog('cleared_in_person')}
+            >
+              Checked in person, all clear
+            </Button>
+            <Button
+              variant="danger"
+              icon={<Siren className="h-4 w-4" />}
+              onClick={() => setDialog('reported_stolen')}
+              style={{ backgroundColor: '#B91C1C', color: '#FFFFFF' }}
+            >
               Report as stolen
             </Button>
-            {alarm.status === 'open' && (
+            {alarm.status !== 'escalated' && (
               <Button
                 variant="secondary"
                 icon={<ArrowUpRight className="h-4 w-4" />}
                 onClick={() => setDialog('escalated')}
               >
-                Escalate to Protection Services
+                Escalate to supervisor
               </Button>
             )}
           </div>
         )}
+
+        {/* Audit trail: triggered → acknowledged → escalated → resolved. */}
+        <details className="mt-4">
+          <summary className="cursor-pointer text-sm font-semibold text-ink-500 hover:text-ink-900">
+            Audit trail
+          </summary>
+          <div className="mt-3">
+            <AlarmTimeline view={view} />
+          </div>
+        </details>
       </div>
 
       {/* FR-SEC-05: the guard who performed the check is recorded with the outcome. */}
@@ -187,18 +252,20 @@ export function AlarmCard({
             ? 'Record an in-person check'
             : dialog === 'reported_stolen'
               ? 'Report this bike as stolen'
-              : 'Escalate to Protection Services'
+              : 'Escalate to supervisor'
         }
         description="Your name and the time are recorded against this crossing. The original result is not changed."
         footer={
           <>
-            <Button variant="ghost" onClick={() => setDialog(null)}>
+            <Button variant="secondary" className="w-32" onClick={() => setDialog(null)}>
               Cancel
             </Button>
             <Button
               variant={dialog === 'cleared_in_person' ? 'primary' : 'danger'}
+              className="w-32"
               loading={resolving}
               onClick={submit}
+              style={dialog === 'cleared_in_person' ? undefined : { backgroundColor: '#B91C1C', color: '#FFFFFF' }}
             >
               {dialog === 'cleared_in_person' ? 'Record check' : dialog === 'reported_stolen' ? 'Report stolen' : 'Escalate'}
             </Button>

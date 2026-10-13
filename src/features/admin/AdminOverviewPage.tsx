@@ -17,6 +17,7 @@ export function AdminOverviewPage() {
   const pending = useRegistrations('pending_approval');
   const awaitingCollection = useRegistrations('tag_pending');
   const alarms = useAlarms('live');
+  const escalated = (alarms.data ?? []).filter((view) => view.alarm.status === 'escalated');
   const audit = useAudit();
 
   return (
@@ -26,7 +27,27 @@ export function AdminOverviewPage() {
         description={`Gate 1 is the live pilot. The system is built to reach all ${PLANNED_GATE_COUNT} gates without a redesign.`}
         actions={<LinkButton to="/admin/registrations">Review registrations</LinkButton>}
       />
-
+      {escalated.length > 0 && (
+        <Alert
+          tone="alert"
+          title={`${escalated.length} alarm${escalated.length === 1 ? '' : 's'} escalated to you`}
+          action={
+            <LinkButton to="/admin/alarms" variant="secondary" size="sm">
+              Review
+            </LinkButton>
+          }
+        >
+          {escalated
+            .slice(0, 3)
+            .map(
+              (view) =>
+                `${view.gateName}: ${
+                  view.alarm.escalationReason === 'no_acknowledgement' ? 'no guard acknowledged in time' : 'guard asked for help'
+                }${view.alarm.acknowledgedAt ? ` (now acknowledged by ${view.acknowledgedByName ?? 'a guard'})` : ''}`,
+            )
+            .join(' · ')}
+        </Alert>
+      )}
       {alarms.data && alarms.data.length > 0 && (
         <Alert
           tone="warn"

@@ -47,7 +47,20 @@ export type MismatchReason =
   | 'tag_reported_stolen'
   | 'incomplete_read';
 
-export type AlarmStatus = 'open' | 'escalated' | 'cleared_in_person' | 'reported_stolen';
+
+export type AlarmStatus =
+  | 'pending' // raised, waiting for a guard to acknowledge it
+  | 'acknowledged' // a guard has confirmed they have seen it and is dealing with it
+  | 'escalated' // the acknowledgement deadline passed, or a guard asked for help
+  | 'cleared_in_person' // resolved: checked in person, all clear
+  | 'reported_stolen'; // resolved: bike reported stolen
+
+/** The two outcomes that close an alarm. */
+export type AlarmResolution = Extract<AlarmStatus, 'cleared_in_person' | 'reported_stolen'>;
+
+/** Why an alarm was escalated, shown to the supervisor and kept in the audit trail. */
+export type EscalationReason = 'no_acknowledgement' | 'guard_request';
+
 
 export type CrossingSource = 'automated' | 'manual_entry' | 'guard_override';
 
@@ -126,8 +139,17 @@ export interface Alarm {
   alarmId: string;
   eventId: string;
   status: AlarmStatus;
+  /** Audit trail: triggered. */
   raisedAt: string;
+  /** Response timer: the guard must acknowledge before this time (set by the server). */
+  acknowledgeBy: string;
+  /** Audit trail: acknowledged. */
+  acknowledgedAt: string | null;
+  acknowledgedByUserId: string | null;
+  /** Audit trail: escalated. */
   escalatedAt: string | null;
+  escalationReason: EscalationReason | null;
+  /** Audit trail: resolved. */
   resolvedByUserId: string | null;
   resolvedAt: string | null;
   notes: string | null;
@@ -169,6 +191,7 @@ export interface Session {
   user: User;
 }
 
+
 /** Alarm rows are denormalised for the guard dashboard (FR-SEC-04). */
 export interface AlarmView {
   alarm: Alarm;
@@ -178,6 +201,7 @@ export interface AlarmView {
   registeredOwner: User | null;
   tagBike: Bike | null;
   ownerBikes: Bike[];
+  acknowledgedByName: string | null;
   resolvedByName: string | null;
 }
 

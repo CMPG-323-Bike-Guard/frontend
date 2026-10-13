@@ -7,6 +7,7 @@ import {
   MonitorCheck,
   ScrollText,
   ShieldCheck,
+  Siren,
   Tag,
   Users,
 } from 'lucide-react';
@@ -51,6 +52,7 @@ export const NAVIGATION: Record<Role, NavItem[]> = {
     { to: '/admin', label: 'Overview', icon: LayoutDashboard, end: true },
     { to: '/admin/registrations', label: 'Registrations', icon: ShieldCheck },
     { to: '/admin/tags', label: 'Tags', icon: Tag },
+     { to: '/admin/alarms', label: 'Alarms', icon: Siren },
     { to: '/admin/crossings', label: 'Crossing log', icon: ScrollText },
     { to: '/admin/people', label: 'People', icon: Users },
     { to: '/admin/audit', label: 'Audit trail', icon: ClipboardList },

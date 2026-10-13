@@ -1,6 +1,6 @@
 import type {
   Alarm,
-  AlarmStatus,
+  AlarmResolution,
   AlarmView,
   Bike,
   BikeStatus,
@@ -22,6 +22,7 @@ import type {
 } from '@/types';
 import { buildSeed, type SeedData } from './seed';
 import { bikePhotoFor } from './media';
+import { ALARM_ACK_TIMEOUT_MS, isLiveAlarm } from '@/lib/constants';
 
 /**
  * Mock service.
@@ -61,6 +62,7 @@ export type RealtimeEvent =
   | { type: 'crossing'; crossing: CrossingView }
   | { type: 'alarm'; alarm: AlarmView }
   | { type: 'alarm-updated'; alarm: AlarmView }
+  | { type: 'alarm-escalated'; alarm: AlarmView }
   | { type: 'gate'; gate: Gate };
 
 type Listener = (event: RealtimeEvent) => void;
@@ -141,6 +143,7 @@ function toAlarmView(alarm: Alarm): AlarmView {
     ownerBikes: presentedUser
       ? db.bikes.filter((bike) => bike.ownerUserId === presentedUser.userId && bike.status === 'active')
       : [],
+    acknowledgedByName: userById(alarm.acknowledgedByUserId)?.name ?? null,
     resolvedByName: userById(alarm.resolvedByUserId)?.name ?? null,
   };
 }
@@ -168,6 +171,54 @@ function notify(userId: string, notification: Omit<Notification, 'notificationId
 }
 
 // ---------------------------------------------------------------------------
+// Alarm escalation
+// ---------------------------------------------------------------------------
+
+/** Supervisors / managers who are told when an alarm is escalated. */
+const supervisors = () => db.users.filter((user) => user.role === 'admin' && user.accountStatus === 'active');
+
+function escalate(alarm: Alarm, reason: 'no_acknowledgement' | 'guard_request', actorUserId: string | null, notes?: string) {
+  alarm.status = 'escalated';
+  alarm.escalatedAt = nowIso();
+  alarm.escalationReason = reason;
+  if (notes?.trim()) alarm.notes = notes.trim();
+
+  const view = toAlarmView(alarm);
+  const who = view.presentedUser?.name ?? 'an unidentified card';
+  const why =
+    reason === 'no_acknowledgement'
+      ? `No guard acknowledged it within ${Math.round(ALARM_ACK_TIMEOUT_MS / 60_000)} min.`
+      : `${userById(actorUserId)?.name ?? 'A guard'} asked for help.`;
+
+  record(actorUserId, 'alarm.escalated', 'alarm', alarm.alarmId, `Escalated to supervisor. ${why}`);
+  supervisors().forEach((supervisor) =>
+    notify(supervisor.userId, {
+      kind: 'security',
+      title: `Alarm escalated at ${view.gateName}`,
+      body: `Gate held for ${who}. ${why} Please follow up with the guard on duty.`,
+    }),
+  );
+  emit({ type: 'alarm-escalated', alarm: view });
+}
+
+/**
+ * Automatic escalation: any alarm still pending after its deadline is
+ * escalated. A real backend runs this as a scheduled job (every few seconds),
+ * so it fires even when no guard has the dashboard open.
+ */
+export function escalateOverdueAlarms(now: number = Date.now()): number {
+  const overdue = db.alarms.filter(
+    (alarm) => alarm.status === 'pending' && new Date(alarm.acknowledgeBy).getTime() <= now,
+  );
+  overdue.forEach((alarm) => escalate(alarm, 'no_acknowledgement', null));
+  return overdue.length;
+}
+
+if (typeof window !== 'undefined') {
+  window.setInterval(() => escalateOverdueAlarms(), 5_000);
+}
+
+// ---------------------------------------------------------------------------
 // Statistics
 // ---------------------------------------------------------------------------
 
@@ -192,7 +243,7 @@ function buildStats(): DashboardStats {
     crossingsToday: today.length,
     matchesToday: today.filter((event) => event.result === 'match').length,
     mismatchesToday: today.filter((event) => event.result === 'mismatch').length,
-    openAlarms: db.alarms.filter((alarm) => alarm.status === 'open' || alarm.status === 'escalated').length,
+    openAlarms: db.alarms.filter((alarm) => isLiveAlarm(alarm.status)).length,
     manualGates: db.gates.filter((gate) => gate.mode === 'manual').length,
     registeredBikes: db.bikes.filter((bike) => bike.status === 'active').length,
     pendingRegistrations: db.bikes.filter((bike) => bike.status === 'pending_approval').length,
@@ -519,38 +570,85 @@ export const mockApi = {
 
   async listAlarms(status: 'live' | 'all' = 'live'): Promise<AlarmView[]> {
     await latency();
+    escalateOverdueAlarms();
     return db.alarms
-      .filter((alarm) => (status === 'live' ? alarm.status === 'open' || alarm.status === 'escalated' : true))
+      .filter((alarm) => (status === 'live' ? isLiveAlarm(alarm.status) : true))
       .sort((a, b) => b.raisedAt.localeCompare(a.raisedAt))
       .slice(0, status === 'live' ? 20 : 100)
       .map(toAlarmView);
   },
 
+  /** Acknowledge button: the guard confirms they have seen the alarm. */
+  async acknowledgeAlarm(alarmId: string, guardUserId: string): Promise<AlarmView> {
+    await latency();
+    const alarm = db.alarms.find((item) => item.alarmId === alarmId);
+    if (!alarm) throw new MockApiError('not_found', 'That alarm no longer exists.');
+    if (!isLiveAlarm(alarm.status)) throw new MockApiError('conflict', 'That alarm has already been resolved.');
+    if (alarm.acknowledgedAt) throw new MockApiError('conflict', 'Another guard has already acknowledged this alarm.');
+
+    alarm.acknowledgedAt = nowIso();
+    alarm.acknowledgedByUserId = guardUserId;
+    // A late acknowledgement keeps the escalated status so the supervisor still sees it.
+    if (alarm.status === 'pending') alarm.status = 'acknowledged';
+
+    const seconds = Math.round((Date.now() - new Date(alarm.raisedAt).getTime()) / 1000);
+    record(
+      guardUserId,
+      'alarm.acknowledged',
+      'alarm',
+      alarmId,
+      `${userById(guardUserId)?.name ?? 'Guard'} acknowledged the alarm after ${seconds}s.`,
+    );
+    const view = toAlarmView(alarm);
+    emit({ type: 'alarm-updated', alarm: view });
+    return view;
+  },
+
+  /** A guard asks the supervisor for help (manual escalation). */
+  async escalateAlarm(alarmId: string, notes: string, guardUserId: string): Promise<AlarmView> {
+    await latency();
+    const alarm = db.alarms.find((item) => item.alarmId === alarmId);
+    if (!alarm) throw new MockApiError('not_found', 'That alarm no longer exists.');
+    if (!isLiveAlarm(alarm.status)) throw new MockApiError('conflict', 'That alarm has already been resolved.');
+    if (alarm.status === 'escalated') throw new MockApiError('conflict', 'This alarm is already escalated.');
+    if (!alarm.acknowledgedAt) {
+      alarm.acknowledgedAt = nowIso();
+      alarm.acknowledgedByUserId = guardUserId;
+    }
+    escalate(alarm, 'guard_request', guardUserId, notes);
+    return toAlarmView(alarm);
+  },
+
   /** FR-SEC-05: the guard who performed the in-person check is recorded. */
   async resolveAlarm(
     alarmId: string,
-    outcome: Extract<AlarmStatus, 'cleared_in_person' | 'reported_stolen' | 'escalated'>,
+    outcome: AlarmResolution,
     notes: string,
     guardUserId: string,
   ): Promise<AlarmView> {
     await latency();
     const alarm = db.alarms.find((item) => item.alarmId === alarmId);
-    if (!alarm) throw new MockApiError('not_found', 'That alarm has already been closed.');
-    alarm.status = outcome;
-    alarm.notes = notes.trim() || null;
-    if (outcome === 'escalated') {
-      alarm.escalatedAt = nowIso();
-    } else {
-      alarm.resolvedByUserId = guardUserId;
-      alarm.resolvedAt = nowIso();
+    if (!alarm) throw new MockApiError('not_found', 'That alarm no longer exists.');
+    if (!isLiveAlarm(alarm.status)) throw new MockApiError('conflict', 'That alarm has already been resolved.');
+
+    const now = nowIso();
+    // Resolving implies the guard has seen it; keep the audit trail complete.
+    if (!alarm.acknowledgedAt) {
+      alarm.acknowledgedAt = now;
+      alarm.acknowledgedByUserId = guardUserId;
     }
+    alarm.status = outcome;
+    alarm.notes = notes.trim() || alarm.notes;
+    alarm.resolvedByUserId = guardUserId;
+    alarm.resolvedAt = now;
+
     const guard = userById(guardUserId);
     record(
       guardUserId,
-      `alarm.${outcome}`,
+      `alarm.resolved.${outcome}`,
       'alarm',
       alarmId,
-      `${guard?.name ?? 'Guard'} recorded: ${outcome.replace(/_/g, ' ')}.`,
+      `${guard?.name ?? 'Guard'} resolved the alarm: ${outcome.replace(/_/g, ' ')}.`,
     );
     const view = toAlarmView(alarm);
     emit({ type: 'alarm-updated', alarm: view });
@@ -853,14 +951,19 @@ export const mockApi = {
       const alarm: Alarm = {
         alarmId: newId('a'),
         eventId: event.eventId,
-        status: 'open',
+        status: 'pending',
         raisedAt: event.timestamp,
+        acknowledgeBy: new Date(new Date(event.timestamp).getTime() + ALARM_ACK_TIMEOUT_MS).toISOString(),
+        acknowledgedAt: null,
+        acknowledgedByUserId: null,
         escalatedAt: null,
+        escalationReason: null,
         resolvedByUserId: null,
         resolvedAt: null,
         notes: null,
       };
       db.alarms.push(alarm);
+      record(null, 'alarm.raised', 'alarm', alarm.alarmId, `Alarm raised at ${gate.name}: ${reason?.replace(/_/g, ' ') ?? 'mismatch'}.`);
       alarmView = toAlarmView(alarm);
     }
 

@@ -1,5 +1,5 @@
 import type {
-  AlarmStatus,
+  AlarmResolution,
   AlarmView,
   BikeStatus,
   BikeView,
@@ -119,14 +119,25 @@ const liveApi = {
   setGateMode: (gateId: string, mode: GateMode, _actorUserId: string) =>
     patch<Gate>(endpoints.gates.mode(gateId), { mode }),
 
+
   listAlarms: (status: 'live' | 'all' = 'live') =>
     request<AlarmView[]>(`${endpoints.alarms.list}${query({ status })}`),
+
+  /** Acknowledge button: the guard confirms they have seen the alarm (stops the response timer). */
+  acknowledgeAlarm: (alarmId: string, _guardUserId: string) =>
+    post<AlarmView>(endpoints.alarms.acknowledge(alarmId)),
+
+  /** A guard asks for help from the supervisor before the timer runs out. */
+  escalateAlarm: (alarmId: string, notes: string, _guardUserId: string) =>
+    post<AlarmView>(endpoints.alarms.escalate(alarmId), { notes }),
+
   resolveAlarm: (
     alarmId: string,
-    outcome: Extract<AlarmStatus, 'cleared_in_person' | 'reported_stolen' | 'escalated'>,
+    outcome: AlarmResolution,
     notes: string,
     _guardUserId: string,
   ) => post<AlarmView>(endpoints.alarms.resolve(alarmId), { outcome, notes }),
+
 
   logManualCrossing: (
     input: { gateId: string; studentNumber: string; bikeDescription: string; note: string },

@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { AlarmStatus, BikeStatus, GateMode } from '@/types';
+import type { AlarmResolution, BikeStatus, GateMode } from '@/types';
 import { api, type BikeInput, type CrossingFilters } from './client';
 
 /** Query keys are namespaced so a mutation can invalidate exactly what changed. */
@@ -139,18 +139,38 @@ export function useSetGateMode() {
   });
 }
 
+
+export function useAcknowledgeAlarm() {
+  const refresh = useRefresh();
+  return useMutation({
+    mutationFn: (vars: { alarmId: string; guardUserId: string }) =>
+      api.acknowledgeAlarm(vars.alarmId, vars.guardUserId),
+    onSuccess: refresh,
+  });
+}
+
+export function useEscalateAlarm() {
+  const refresh = useRefresh();
+  return useMutation({
+    mutationFn: (vars: { alarmId: string; notes: string; guardUserId: string }) =>
+      api.escalateAlarm(vars.alarmId, vars.notes, vars.guardUserId),
+    onSuccess: refresh,
+  });
+}
+
 export function useResolveAlarm() {
   const refresh = useRefresh();
   return useMutation({
     mutationFn: (vars: {
       alarmId: string;
-      outcome: Extract<AlarmStatus, 'cleared_in_person' | 'reported_stolen' | 'escalated'>;
+      outcome: AlarmResolution;
       notes: string;
       guardUserId: string;
     }) => api.resolveAlarm(vars.alarmId, vars.outcome, vars.notes, vars.guardUserId),
     onSuccess: refresh,
   });
 }
+
 
 export function useManualCrossing() {
   const refresh = useRefresh();

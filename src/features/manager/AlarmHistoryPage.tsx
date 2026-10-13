@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import type { AlarmStatus } from '@/types';
+import { isLiveAlarm } from '@/lib/constants';
 import { useAlarms } from '@/api/queries';
 import { Alert } from '@/components/ui/Alert';
 import { Card } from '@/components/ui/Card';
@@ -8,6 +9,7 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { SkeletonRows } from '@/components/ui/Spinner';
 import { Tabs } from '@/components/ui/Tabs';
 import { AlarmCard } from '@/components/domain/AlarmCard';
+
 
 type Filter = 'all' | 'live' | AlarmStatus;
 
@@ -23,7 +25,7 @@ export function AlarmHistoryPage() {
   const rows = useMemo(() => {
     const data = alarms.data ?? [];
     if (filter === 'all') return data;
-    if (filter === 'live') return data.filter((view) => view.alarm.status === 'open' || view.alarm.status === 'escalated');
+    if (filter === 'live') {return data.filter((view) => isLiveAlarm(view.alarm.status));}
     return data.filter((view) => view.alarm.status === filter);
   }, [alarms.data, filter]);
 
@@ -38,9 +40,10 @@ export function AlarmHistoryPage() {
         label="Filter alarms"
         value={filter}
         onChange={setFilter}
-        options={[
+       options={[
           { value: 'all', label: 'All alarms' },
           { value: 'live', label: 'Still open' },
+          { value: 'escalated', label: 'Escalated' },
           { value: 'reported_stolen', label: 'Reported stolen' },
           { value: 'cleared_in_person', label: 'Cleared in person' },
         ]}

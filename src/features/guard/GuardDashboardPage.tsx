@@ -3,12 +3,14 @@ import { CheckCircle2, ShieldCheck, Volume2, VolumeX } from 'lucide-react';
 import type { CrossingView } from '@/types';
 import { useCurrentUser } from '@/auth/AuthContext';
 import { useAlarms, useCrossings, useGates, useResolveAlarm } from '@/api/queries';
+import { useAcknowledgeAlarm, useEscalateAlarm } from '@/api/queries';
 import { useRealtime } from '@/api/useRealtime';
 import type { RealtimeEvent } from '@/api/realtime';
 import { ApiError } from '@/api/client';
 import { playAlarmTone } from '@/lib/alarmSound';
 import { formatTime, relativeTime } from '@/lib/format';
 import { cx } from '@/lib/cx';
+import { isLiveAlarm } from '@/lib/constants';
 import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
 import { Card, CardBody, CardHeader } from '@/components/ui/Card';
@@ -21,7 +23,6 @@ import { ConnectionIndicator } from '@/components/domain/ConnectionIndicator';
 import { GateBoard } from '@/components/domain/GateBoard';
 import { ResultBadge } from '@/components/domain/StatusBadges';
 import { GateSimulator } from './GateSimulator';
-
 /**
  * Guard dashboard — UC-02, UC-03 and FR-SEC-01 to FR-SEC-06.
  *
@@ -37,6 +38,8 @@ export function GuardDashboardPage() {
   const alarms = useAlarms('live');
   const recent = useCrossings({ limit: 12 });
   const resolveAlarm = useResolveAlarm();
+  const acknowledgeAlarm = useAcknowledgeAlarm();
+  const escalateAlarm = useEscalateAlarm();
 
   const [selectedGateIds, setSelectedGateIds] = useState<string[]>([]);
   const [soundOn, setSoundOn] = useState(true);
@@ -59,6 +62,12 @@ export function GuardDashboardPage() {
     if (event.type === 'alarm') {
       const who = event.alarm.presentedUser?.name ?? 'An unidentified card';
       setAnnouncement(`Alarm at ${event.alarm.gateName}. ${who}. Gate held.`);
+      if (soundRef.current) playAlarmTone();
+      void alarms.refetch();
+    }
+    if (event.type === 'alarm-escalated') {
+      // Automatic escalation: tell the guard on duty too, not only the supervisor.
+      setAnnouncement(`Alarm at ${event.alarm.gateName} escalated to the supervisor.`);
       if (soundRef.current) playAlarmTone();
       void alarms.refetch();
     }
@@ -90,21 +99,49 @@ export function GuardDashboardPage() {
   );
 
   const manualGates = (gates.data ?? []).filter((gate) => gate.mode === 'manual');
-
-  async function handleResolve(alarmId: string, outcome: Resolution, notes: string) {
+  async function handleAcknowledge(alarmId: string) {
     try {
-      await resolveAlarm.mutateAsync({ alarmId, outcome, notes, guardUserId: user.userId });
+      await acknowledgeAlarm.mutateAsync({ alarmId, guardUserId: user.userId });
+      toast.confirm('Alarm acknowledged. Check the rider, then record what you found.');
+    } catch (error) {
+      toast.problem(error instanceof ApiError ? error.message : 'The alarm could not be acknowledged.');
+    }
+  }
+
+ 
+async function handleResolve(alarmId: string, outcome: Resolution, notes: string) {
+  try {
+    if (outcome === 'escalated') {
+      await escalateAlarm.mutateAsync({
+        alarmId,
+        notes,
+        guardUserId: user.userId,
+      });
+
+      toast.confirm('Alarm escalated to Protection Services.');
+    } else {
+      await resolveAlarm.mutateAsync({
+        alarmId,
+        outcome,
+        notes,
+        guardUserId: user.userId,
+      });
+
       toast.confirm(
         outcome === 'cleared_in_person'
           ? 'Check recorded against the crossing.'
-          : outcome === 'reported_stolen'
-            ? 'Reported stolen. Protection Services can see the record.'
-            : 'Escalated to Protection Services.',
+          : 'Reported stolen. Protection Services can see the record.',
       );
-    } catch (error) {
-      toast.problem(error instanceof ApiError ? error.message : 'The alarm could not be updated.');
     }
+  } catch (error) {
+    toast.problem(
+      error instanceof ApiError
+        ? error.message
+        : 'The alarm could not be updated.',
+    );
   }
+}
+
 
   function toggleGate(gateId: string) {
     setSelectedGateIds((current) =>
@@ -220,12 +257,17 @@ export function GuardDashboardPage() {
           )}
 
           {visibleAlarms.map((view) => (
-            <AlarmCard
-              key={view.alarm.alarmId}
-              view={view}
-              onResolve={handleResolve}
-              resolving={resolveAlarm.isPending}
-            />
+           <AlarmCard
+            key={view.alarm.alarmId}
+            view={view}
+            onResolve={handleResolve}
+            resolving={resolveAlarm.isPending || escalateAlarm.isPending}
+            onAcknowledge={handleAcknowledge}
+            acknowledging={
+              acknowledgeAlarm.isPending &&
+              acknowledgeAlarm.variables?.alarmId === view.alarm.alarmId
+            }
+          />
           ))}
         </div>
 
@@ -272,7 +314,7 @@ export function GuardDashboardPage() {
 
 function ClosedAlarms() {
   const all = useAlarms('all');
-  const closed = (all.data ?? []).filter((view) => view.alarm.status !== 'open' && view.alarm.status !== 'escalated').slice(0, 6);
+  const closed = (all.data ?? []).filter((view) => !isLiveAlarm(view.alarm.status)).slice(0, 6);
 
   if (all.isLoading) return <SkeletonRows rows={3} className="py-4" />;
   if (closed.length === 0) {
