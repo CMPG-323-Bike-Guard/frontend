@@ -217,7 +217,7 @@ export function AdminOverviewPage() {
             count={alarmCount}
             help="Bikes the gate stopped. A guard still needs to record the outcome."
             doneText="No open alarms."
-            to="/reports"
+            to="/admin/alarms"
             actionLabel="Review alarms"
           />
         )}

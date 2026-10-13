@@ -21,7 +21,7 @@ import { NotificationsPage } from '@/features/student/NotificationsPage';
 
 import { GuardDashboardPage } from '@/features/guard/GuardDashboardPage';
 import { ManualChecksPage } from '@/features/guard/ManualChecksPage';
-
+import { AlarmHistoryPage } from '@/features/manager/AlarmHistoryPage';
 import { AdminOverviewPage } from '@/features/admin/AdminOverviewPage';
 import { RegistrationsPage } from '@/features/admin/RegistrationsPage';
 import { TagsPage } from '@/features/admin/TagsPage';
@@ -101,6 +101,7 @@ export default function App() {
                   element={<RegistrationsPage />}
                 />
                 <Route path="/admin/tags" element={<TagsPage />} />
+                <Route path="/admin/alarms" element={<AlarmHistoryPage />} />
                 <Route
                   path="/admin/crossings"
                   element={<CrossingLogPage canExport />}
