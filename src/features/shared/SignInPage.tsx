@@ -184,7 +184,7 @@ export function SignInPage() {
           </p>
 
           {/* Role selector */}
-          <div className="mt-6 grid grid-cols-2 gap-1 rounded-lg bg-ink-50 p-1 sm:grid-cols-4">
+          <div className="mt-6 grid w-full grid-cols-3 gap-2 rounded-lg bg-ink-50 px-0 py-1">
 
             {ROLE_TABS.map((role) => {
               const selected = selectedRole === role.key;
@@ -198,7 +198,7 @@ export function SignInPage() {
                     setFormError(null);
                   }}
                   className={[
-                    'rounded-md px-3 py-2 text-sm font-medium transition',
+                    'w-full min-w-0 rounded-md px-1 py-2 text-[13px] font-medium leading-5 transition cursor-pointer min-[400px]:whitespace-nowrap sm:px-2 sm:text-sm',
                     selected
                       ? 'bg-white text-signal-600 shadow-sm'
                       : 'text-ink-500 hover:text-ink-900',
