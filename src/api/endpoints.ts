@@ -41,10 +41,12 @@ export const endpoints = {
   },
   gates: {
     list: '/gates',
+    create: '/gates',
     mode: (gateId: string) => `/gates/${gateId}/mode`,
   },
   dev: {
     simulateCrossing: '/dev/simulate-crossing',
+    simulatorStatus: '/dev/simulator-status',
   },
   crossings: {
     list: '/crossings',

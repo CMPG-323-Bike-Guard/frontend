@@ -18,7 +18,7 @@ import { MyBikesPage } from '@/features/student/MyBikesPage';
 import { RegisterBikePage } from '@/features/student/RegisterBikePage';
 import { BikeDetailPage } from '@/features/student/BikeDetailPage';
 import { NotificationsPage } from '@/features/student/NotificationsPage';
-
+import { GatesPage } from '@/features/admin/GatesPage';
 import { GuardDashboardPage } from '@/features/guard/GuardDashboardPage';
 import { ManualChecksPage } from '@/features/guard/ManualChecksPage';
 import { AlarmHistoryPage } from '@/features/manager/AlarmHistoryPage';
@@ -102,6 +102,7 @@ export default function App() {
                 />
                 <Route path="/admin/tags" element={<TagsPage />} />
                 <Route path="/admin/alarms" element={<AlarmHistoryPage />} />
+                <Route path="/admin/gates" element={<GatesPage />} />
                 <Route
                   path="/admin/crossings"
                   element={<CrossingLogPage canExport />}

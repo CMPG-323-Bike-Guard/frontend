@@ -7,6 +7,7 @@ import type {
   DashboardStats,
   Gate,
   GateMode,
+  NewGate,
   NewPerson,
   Notification,
   PendingPhoto,
@@ -135,6 +136,7 @@ const liveApi = {
     request<BikeView>(endpoints.bikes.permission(permissionId), { method: 'DELETE' }),
 
   listGates: () => request<Gate[]>(endpoints.gates.list),
+  createGate: (input: NewGate, _adminUserId: string) => post<Gate>(endpoints.gates.create, input),
   setGateMode: (gateId: string, mode: GateMode, _actorUserId: string) =>
     patch<Gate>(endpoints.gates.mode(gateId), { mode }),
 
@@ -227,9 +229,14 @@ export const demo = {
   reset: mockApi.reset.bind(mockApi),
 };
 
-/** Dev-only reader emulator. Talks to the backend's /dev/simulate-crossing route. */
+/**
+ * Reader emulator. Talks to the backend's /dev/simulate-crossing route.
+ * Whether it is switched on is decided by the backend (ENABLE_SIMULATOR), so the
+ * same build works locally and on the live website.
+ */
 export const devTools = {
-  enabled: API_MODE === 'live' && import.meta.env.DEV,
+  available: API_MODE === 'live',
+  status: () => request<{ enabled: boolean }>(endpoints.dev.simulatorStatus),
   scan: (gateId: string, studentNumber: string | null, tagUid: string | null) =>
     post<{ crossing: CrossingView; gateShouldOpen: boolean; alarmRaised: boolean }>(
       endpoints.dev.simulateCrossing,

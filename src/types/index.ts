@@ -146,6 +146,11 @@ export interface RfidTag {
   replacesTagId: string | null;
 }
 
+export interface NewGate {
+  name: string;
+  location: string;
+}
+
 export interface Gate {
   gateId: string;
   name: string;

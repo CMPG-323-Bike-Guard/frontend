@@ -3,6 +3,7 @@ import type {
   AlarmResolution,
   BikeStatus,
   GateMode,
+  NewGate,
   NewPerson,
   Notification,
   PendingPhoto,
@@ -10,7 +11,7 @@ import type {
   PhotoTargetType,
 } from '@/types';
 import { useAuth } from '@/auth/AuthContext';
-import { api, type BikeInput, type CrossingFilters, type ProfileDetailsInput } from './client';
+import { api, devTools, type BikeInput, type CrossingFilters, type ProfileDetailsInput } from './client';
 
 /** Query keys are namespaced so a mutation can invalidate exactly what changed. */
 export const keys = {
@@ -158,6 +159,25 @@ export function useRevokePermission() {
     mutationFn: (vars: { permissionId: string; actorUserId: string }) =>
       api.revokePermission(vars.permissionId, vars.actorUserId),
     onSuccess: refresh,
+  });
+}
+
+export function useCreateGate() {
+  const refresh = useRefresh();
+  return useMutation({
+    mutationFn: (vars: { input: NewGate; adminUserId: string }) => api.createGate(vars.input, vars.adminUserId),
+    onSuccess: refresh,
+  });
+}
+
+/** Asks the backend whether the reader emulator is switched on. */
+export function useSimulatorStatus() {
+  return useQuery({
+    queryKey: ['simulator-status'],
+    queryFn: () => devTools.status(),
+    enabled: devTools.available,
+    staleTime: 5 * 60_000,
+    retry: false,
   });
 }
 

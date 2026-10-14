@@ -9,6 +9,7 @@ import { Card, CardBody, CardHeader } from '@/components/ui/Card';
 import { Field } from '@/components/ui/Field';
 import { Input, Select } from '@/components/ui/Input';
 import { useToast } from '@/components/ui/Toast';
+import { useSimulatorStatus } from '@/api/queries';
 
 const PRESETS = [
   { label: 'Thabo + his own bike', student: '30112233', tag: 'TAG-RAW-0001', expect: 'match' },
@@ -33,9 +34,10 @@ export function ReaderEmulator({ gates }: { gates: Gate[] }) {
   const [studentNumber, setStudentNumber] = useState(PRESETS[0].student);
   const [tag, setTag] = useState(PRESETS[0].tag);
   const [busy, setBusy] = useState(false);
-  const [outcome, setOutcome] = useState<Outcome | null>(null);
+    const [outcome, setOutcome] = useState<Outcome | null>(null);
+  const simulator = useSimulatorStatus();
 
-  if (!devTools.enabled || gates.length === 0) return null;
+  if (!simulator.data?.enabled || gates.length === 0) return null;
 
   const activeId = gateId || gates[0].gateId;
   const activeGate = gates.find((gate) => gate.gateId === activeId) ?? gates[0];
@@ -79,7 +81,7 @@ export function ReaderEmulator({ gates }: { gates: Gate[] }) {
             Reader emulator
           </span>
         }
-        description="Development only. Pretends to be the gate's card reader and tag reader and sends the raw UIDs through the real verification engine."
+        description="Testing only. Pretends to be the gate's card reader and tag reader and sends the raw UIDs through the real verification engine. The presets use the demo data; for your own bikes type the student number and the tag UID you registered. These crossings are marked as simulated in the crossing log."
       />
       <CardBody className="flex flex-col gap-4">
         <Field label="Gate">

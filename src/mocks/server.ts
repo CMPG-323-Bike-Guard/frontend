@@ -12,6 +12,7 @@ import type {
   GateMode,
   MismatchReason,
   NewPerson,
+  NewGate,
   Notification,
   PendingPhoto,
   PhotoModeration,
@@ -709,6 +710,27 @@ export const mockApi = {
   async listGates(): Promise<Gate[]> {
     await latency();
     return [...db.gates];
+  },
+
+    async createGate(input: NewGate, adminUserId: string): Promise<Gate> {
+    await latency();
+    const name = input.name.trim();
+    if (db.gates.some((item) => item.name === name)) {
+      throw new MockApiError('conflict', 'A gate with that name already exists.', 'name');
+    }
+    const gate: Gate = {
+      gateId: newId('g'),
+      name,
+      location: input.location.trim(),
+      health: 'good',
+      commissioned: true,
+      mode: 'automated',
+      manualSince: null,
+    };
+    db.gates.push(gate);
+    record(adminUserId, 'gate.created', 'gate', gate.gateId, `Gate "${gate.name}" was added${gate.location ? ` at ${gate.location}` : ''}.`);
+    emit({ type: 'gate', gate });
+    return gate;
   },
 
   /** UC-06. */
