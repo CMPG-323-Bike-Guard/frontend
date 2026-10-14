@@ -131,7 +131,7 @@ export function AppShell() {
   );
 
   return (
-    <div className="min-h-screen bg-portal-background">
+    <div className="min-h-dvh bg-portal-background">
       <a href="#main" className="skip-link">
         Skip to content
       </a>
@@ -153,7 +153,10 @@ export function AppShell() {
           </button>
         </div>
         {drawerOpen && (
-          <div id="mobile-navigation" className="border-t border-white/20 bg-brand-purple px-4 py-3">
+          <div
+            id="mobile-navigation"
+            className="max-h-[calc(100dvh-4rem)] overflow-y-auto overscroll-contain border-t border-white/20 bg-brand-purple px-4 py-3"
+            >
             {nav}
             {isAdmin && <div className="mt-3 border-t border-white/20 pt-3">{profileLink}</div>}
             <button
@@ -169,15 +172,15 @@ export function AppShell() {
       </header>
 
       <div className="mx-auto flex w-full max-w-[100rem]">
-        <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-white/20 bg-brand-purple px-4 py-5 lg:flex">
-          <Link to={homePath} className="flex flex-col gap-0.5 px-1">
+        <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col overflow-hidden border-r border-white/20 bg-brand-purple px-4 py-5 lg:flex">
+          <Link to={homePath} className="flex shrink-0 flex-col gap-0.5 px-1">
             <Brand className="text-2xl [&>span:nth-child(2)]:text-white" invert />
             <span className="text-xs text-white/80">{INSTITUTION}</span>
           </Link>
 
-          <div className="mt-7 flex flex-1 flex-col">{nav}</div>
+          <div className="mt-7 flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain">{nav}</div>
 
-          <div className="mt-auto border-t border-white/20 pt-3">
+          <div className="mt-auto shrink-0 border-t border-white/20 pt-3">
             {profileLink}
             <button
               type="button"
