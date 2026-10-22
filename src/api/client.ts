@@ -243,3 +243,7 @@ export const devTools = {
       { gateId, studentNumber, tagUid },
     ),
 };
+
+export const cardTools = {
+  link: (userId: string) => post<{ cardRef: string }>(`/users/${userId}/card`),
+};

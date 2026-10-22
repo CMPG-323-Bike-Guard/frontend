@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Pencil, Search, UserPlus } from 'lucide-react';
+import { CreditCard, Pencil, Search, UserPlus } from 'lucide-react';
 import type { Role, User } from '@/types';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/api/client';
@@ -20,6 +20,8 @@ import { TableWrap, Td, Th } from '@/components/ui/Table';
 import { AddPersonModal } from './AddPersonModal';
 import { EditPersonModal } from './EditPersonModal';
 import { PersonActionModal, type PersonAction } from './PersonActionModal';
+import { LinkCardModal } from './LinkCardModal';
+
 
 /**
  * * BikeGuard reads the existing NWU card system and does not issue or replace
@@ -31,7 +33,8 @@ export function PeoplePage() {
   const [role, setRole] = useState<Role | 'all'>('all');
   const [query, setQuery] = useState('');
   const [adding, setAdding] = useState(false);
-    const [editing, setEditing] = useState<User | null>(null);
+  const [editing, setEditing] = useState<User | null>(null);
+  const [linking, setLinking] = useState<User | null>(null);
   const [action, setAction] = useState<PersonAction | null>(null);
   const admin = useCurrentUser();
 
@@ -130,6 +133,15 @@ export function PeoplePage() {
                           >
                             Edit
                           </Button>
+                          <Button
+                            className="w-full justify-start"
+                            size="sm"
+                            variant="subtle"
+                            icon={<CreditCard className="h-4 w-4" aria-hidden="true" />}
+                            onClick={() => setLinking(user)}
+                          >
+                            Link card
+                          </Button>
                           {user.userId !== admin.userId && (
                             <>
                               {user.accountStatus === 'active' ? (
@@ -172,6 +184,7 @@ export function PeoplePage() {
             </Card>
       <AddPersonModal open={adding} onClose={() => setAdding(false)} />
       <EditPersonModal person={editing} onClose={() => setEditing(null)} />
+      <LinkCardModal person={linking} onClose={() => setLinking(null)} />
       <PersonActionModal action={action} onClose={() => setAction(null)} />
     </div>
   );

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Radio } from 'lucide-react';
 import type { Gate } from '@/types';
 import { useCurrentUser } from '@/auth/AuthContext';
@@ -10,6 +10,7 @@ import { Field } from '@/components/ui/Field';
 import { Input, Select } from '@/components/ui/Input';
 import { useToast } from '@/components/ui/Toast';
 import { useSimulatorStatus } from '@/api/queries';
+import { useRealtime } from '@/api/useRealtime';
 
 const PRESETS = [
   { label: 'Thabo + his own bike', student: '30112233', tag: 'TAG-RAW-0001', expect: 'match' },
@@ -36,6 +37,21 @@ export function ReaderEmulator({ gates }: { gates: Gate[] }) {
   const [busy, setBusy] = useState(false);
     const [outcome, setOutcome] = useState<Outcome | null>(null);
   const simulator = useSimulatorStatus();
+
+  const tagInput = useRef<HTMLInputElement>(null);
+  useRealtime((event) => {
+    if (event.type !== 'card-tap') return;
+    if (event.gateId) setGateId(event.gateId);
+    setOutcome(null);
+    if (!event.studentNumber) {
+      setStudentNumber('');
+      toast.problem(`Card ${event.cardRef} is not linked to a student yet.`);
+      return;
+    }
+    setStudentNumber(event.studentNumber);
+    setTag('');
+    setTimeout(() => tagInput.current?.focus(), 0);
+  });
 
   if (!simulator.data?.enabled || gates.length === 0) return null;
 
@@ -117,8 +133,18 @@ export function ReaderEmulator({ gates }: { gates: Gate[] }) {
               <Input id={id} inputMode="numeric" value={studentNumber} onChange={(event) => setStudentNumber(event.target.value)} />
             )}
           </Field>
-          <Field label="Tag UID (blank = no tag read)">
-            {({ id }) => <Input id={id} value={tag} onChange={(event) => setTag(event.target.value)} />}
+                    <Field label="Tag UID (blank = no tag read)">
+            {({ id }) => (
+              <Input
+                ref={tagInput}
+                id={id}
+                value={tag}
+                onChange={(event) => setTag(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') void tap();
+                }}
+              />
+            )}
           </Field>
         </div>
 
