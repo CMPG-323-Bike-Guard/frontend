@@ -1,75 +1,41 @@
-# React + TypeScript + Vite
+# BikeGuard Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Web app for BikeGuard, the RFID bicycle security and gate verification platform
+for the NWU campus. It serves four roles: **students** (register bikes, see
+notifications), **guards** (live gate dashboard, manual checks, alarms),
+**managers** (alarm history, reports) and **admins** (people, gates, tags, card
+linking, photo review, audit log, reports).
 
-Currently, two official plugins are available:
+The matching API lives in the `backend` repo.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Stack
+React 18, TypeScript, Vite, Tailwind CSS 4, TanStack Query, React Router,
+Socket.io (live gate events), Recharts, Vitest + Testing Library.
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+## Getting started
+```bash
+cp .env.example .env.local
+npm install
+npm run dev        # http://localhost:5173
 ```
 
-You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
+| Variable | Meaning |
+|---|---|
+| `VITE_API_MODE` | `live` talks to the backend; `mock` (the default if unset) uses the in-browser mock API in `src/mocks/` |
+| `VITE_API_BASE_URL` | e.g. `http://localhost:3000/api/v1` |
+| `VITE_REALTIME_URL` | e.g. `http://localhost:3000` |
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+For live mode, start the backend first (`npm run migrate && npm run seed &&
+npm run dev` there). Sample logins are in the backend README.
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Scripts
+`npm run dev` · `npm run build` · `npm run preview` · `npm run lint` (type
+check) · `npm test`
 
-```
+## Structure
+`src/api` (client, endpoints, queries, realtime) · `src/auth` · `src/features/{student,guard,manager,admin,shared}` ·
+`src/components/{ui,domain,layout}` · `src/mocks` · `src/tests`.
+API details for profile/photo endpoints: `docs/api-profile.md`.
+
+## Deployment
+<!-- host, live URL, and the VITE_* values used for the production build -->
