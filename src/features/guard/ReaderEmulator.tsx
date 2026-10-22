@@ -12,14 +12,6 @@ import { useToast } from '@/components/ui/Toast';
 import { useSimulatorStatus } from '@/api/queries';
 import { useRealtime } from '@/api/useRealtime';
 
-const PRESETS = [
-  { label: 'Thabo + his own bike', student: '30112233', tag: 'TAG-RAW-0001', expect: 'match' },
-  { label: "Lerato's card + Thabo's bike", student: '30112244', tag: 'TAG-RAW-0001', expect: 'tag_registered_to_other_user' },
-  { label: 'Unknown tag', student: '30112233', tag: 'TAG-NOPE', expect: 'tag_not_registered' },
-  { label: 'Card only (no tag)', student: '30112233', tag: '', expect: 'incomplete_read' },
-  { label: 'Tag only (no card)', student: '', tag: 'TAG-RAW-0001', expect: 'incomplete_read' },
-];
-
 interface Outcome {
   result: string;
   reason: string | null;
@@ -32,10 +24,10 @@ export function ReaderEmulator({ gates }: { gates: Gate[] }) {
   const user = useCurrentUser();
   const toast = useToast();
   const [gateId, setGateId] = useState('');
-  const [studentNumber, setStudentNumber] = useState(PRESETS[0].student);
-  const [tag, setTag] = useState(PRESETS[0].tag);
+  const [studentNumber, setStudentNumber] = useState('');
+  const [tag, setTag] = useState('');
   const [busy, setBusy] = useState(false);
-    const [outcome, setOutcome] = useState<Outcome | null>(null);
+  const [outcome, setOutcome] = useState<Outcome | null>(null);
   const simulator = useSimulatorStatus();
 
   const tagInput = useRef<HTMLInputElement>(null);
@@ -61,7 +53,7 @@ export function ReaderEmulator({ gates }: { gates: Gate[] }) {
   async function tap() {
     setBusy(true);
     try {
-        const res = await devTools.scan(activeId, studentNumber.trim() || null, tag.trim() || null);
+      const res = await devTools.scan(activeId, studentNumber.trim() || null, tag.trim() || null);
       setOutcome({
         result: res.crossing.event.result,
         reason: res.crossing.event.mismatchReason,
@@ -97,35 +89,22 @@ export function ReaderEmulator({ gates }: { gates: Gate[] }) {
             Reader emulator
           </span>
         }
-        description="Testing only. Pretends to be the gate's card reader and tag reader and sends the raw UIDs through the real verification engine. The presets use the demo data; for your own bikes type the student number and the tag UID you registered. These crossings are marked as simulated in the crossing log."
+        description="Testing only. Pretends to be the gate's card reader and tag reader and sends the raw UIDs through the real verification engine. Tap a linked card to fill in the student number, then type the tag UID you registered. These crossings are marked as simulated in the crossing log."
       />
       <CardBody className="flex flex-col gap-4">
-        <Field label="Gate">
-          {({ id }) => (
-            <Select id={id} value={activeId} onChange={(event) => setGateId(event.target.value)}>
-              {gates.map((gate) => (
-                <option key={gate.gateId} value={gate.gateId}>
-                  {gate.name} ({gate.mode})
-                </option>
-              ))}
-            </Select>
-          )}
-        </Field>
-
-        <div className="flex flex-wrap gap-2">
-          {PRESETS.map((preset) => (
-            <Button
-              key={preset.label}
-              variant="subtle"
-              onClick={() => {
-                setStudentNumber(preset.student);
-                setTag(preset.tag);
-              }}
-            >
-              {preset.label}
-            </Button>
-          ))}
-        </div>
+        {gates.length > 1 && (
+          <Field label="Gate">
+            {({ id }) => (
+              <Select id={id} value={activeId} onChange={(event) => setGateId(event.target.value)}>
+                {gates.map((gate) => (
+                  <option key={gate.gateId} value={gate.gateId}>
+                    {gate.name} ({gate.mode})
+                  </option>
+                ))}
+              </Select>
+            )}
+          </Field>
+        )}
 
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Student number read from the card (blank = no card read)">
@@ -133,7 +112,7 @@ export function ReaderEmulator({ gates }: { gates: Gate[] }) {
               <Input id={id} inputMode="numeric" value={studentNumber} onChange={(event) => setStudentNumber(event.target.value)} />
             )}
           </Field>
-                    <Field label="Tag UID (blank = no tag read)">
+          <Field label="Tag UID (blank = no tag read)">
             {({ id }) => (
               <Input
                 ref={tagInput}
